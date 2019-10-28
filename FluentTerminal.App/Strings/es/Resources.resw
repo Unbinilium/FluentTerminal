@@ -117,9 +117,10 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="About.Text" xml:space="preserve">
+  <data name="AboutDialog.Title" xml:space="preserve">
     <value>Acerca de...</value>
-    <comment>MainPage.xaml</comment>
+    <comment>MainPage.xaml
+Fuzzy</comment>
   </data>
   <data name="Background.Content" xml:space="preserve">
     <value>Fondo</value>
@@ -129,9 +130,10 @@
     <value>Azul</value>
     <comment>TabBar.xaml</comment>
   </data>
-  <data name="Close.Text" xml:space="preserve">
+  <data name="Close" xml:space="preserve">
     <value>Cerrar</value>
-    <comment>TabBar.xaml</comment>
+    <comment>TabBar.xaml
+Fuzzy</comment>
   </data>
   <data name="ConfirmWindowClosing.Header" xml:space="preserve">
     <value>Preguntar antes de cerrar las ventanas</value>
@@ -963,5 +965,29 @@ Fuzzy</comment>
   </data>
   <data name="EnvironmentVariables.Text" xml:space="preserve">
     <value>Environment variables</value>
+  </data>
+  <data name="CloseSearchPanel.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Close search panel</value>
+  </data>
+  <data name="FindNext.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Find next</value>
+  </data>
+  <data name="FindPrevious.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Find previous</value>
+  </data>
+  <data name="SearchTextBox.PlaceholderText" xml:space="preserve">
+    <value>Enter search term</value>
+  </data>
+  <data name="Search.Text" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="PrintableOutputOnly.Content" xml:space="preserve">
+    <value>Printable output only</value>
+  </data>
+  <data name="EnableLogging.Header" xml:space="preserve">
+    <value>Log output for debugging</value>
+  </data>
+  <data name="WordSeparator.Header" xml:space="preserve">
+    <value>Word separator characters</value>
   </data>
 </root>

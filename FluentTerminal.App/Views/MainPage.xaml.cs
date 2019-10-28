@@ -1,5 +1,6 @@
 ﻿using FluentTerminal.App.Utilities;
 using FluentTerminal.App.ViewModels;
+using FluentTerminal.Models;
 using System;
 using System.ComponentModel;
 using System.Linq;
@@ -8,6 +9,8 @@ using Windows.UI.Core;
 using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Media;
+using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
 using FluentTerminal.App.Services;
 using FluentTerminal.App.Services.EventArgs;
@@ -19,7 +22,7 @@ namespace FluentTerminal.App.Views
 {
     public sealed partial class MainPage : Page, INotifyPropertyChanged
     {
-        private readonly CoreApplicationViewTitleBar coreTitleBar = CoreApplication.GetCurrentView().TitleBar;
+        private CoreApplicationViewTitleBar coreTitleBar = CoreApplication.GetCurrentView().TitleBar;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -44,21 +47,24 @@ namespace FluentTerminal.App.Views
 
         public MainViewModel ViewModel { get; private set; }
 
+        private long _propertyChangedCallbackToken;
+
         public MainPage()
         {
             InitializeComponent();
             Root.DataContext = this;
             Window.Current.SetTitleBar(TitleBar);
             Loaded += OnLoaded;
-            Unloaded += OnUnloaded;
             DraggingHappensChanged += MainPage_DraggingHappensChanged;
             Window.Current.Activated += OnWindowActivated;
-            RegisterPropertyChangedCallback(RequestedThemeProperty, (s, e) =>
-            {
-                ContrastHelper.SetTitleBarButtonsForTheme(RequestedTheme);
-            });
+            _propertyChangedCallbackToken = RegisterPropertyChangedCallback(RequestedThemeProperty, OnRequestedThemeProperty);
 
             ApplicationView.PreferredLaunchWindowingMode = ApplicationViewWindowingMode.Auto;
+        }
+
+        private void OnRequestedThemeProperty(DependencyObject sender, DependencyProperty dp)
+        {
+            ContrastHelper.SetTitleBarButtonsForTheme(RequestedTheme);
         }
 
         private async void MainPage_DraggingHappensChanged(object sender, bool e)
@@ -78,21 +84,51 @@ namespace FluentTerminal.App.Views
             if (e.Parameter is MainViewModel viewModel)
             {
                 ViewModel = viewModel;
+                ViewModel.Closed += ViewModel_Closed;
             }
+            base.OnNavigatedTo(e);
+        }
+
+        private void ViewModel_Closed(object sender, EventArgs e)
+        {
+            TopTabBar.TabDraggedOutside -= TabBar_TabDraggedOutside;
+            TopTabBar.TabWindowChanged -= TabView_Drop;
+            TopTabBar.TabDraggingCompleted -= TabBar_TabDraggingCompleted;
+            TopTabBar.TabDraggingChanged -= TabBar_TabDraggingChanged;
+
+            BottomTabBar.TabDraggedOutside -= TabBar_TabDraggedOutside;
+            BottomTabBar.TabWindowChanged -= TabView_Drop;
+            BottomTabBar.TabDraggingCompleted -= TabBar_TabDraggingCompleted;
+            BottomTabBar.TabDraggingChanged -= TabBar_TabDraggingChanged;
+
+            TopTabBar.DisposalPrepare();
+            BottomTabBar.DisposalPrepare();
+
+            UnregisterPropertyChangedCallback(RequestedThemeProperty, _propertyChangedCallbackToken);
+
+            Loaded -= OnLoaded;
+            DraggingHappensChanged -= MainPage_DraggingHappensChanged;
+            Window.Current.Activated -= OnWindowActivated;
+
+            coreTitleBar.LayoutMetricsChanged -= OnLayoutMetricsChanged;
+
+            ViewModel.Closed -= ViewModel_Closed;
+            ViewModel = null;
+            Root.DataContext = null;
+            Window.Current.SetTitleBar(null);
+
+            coreTitleBar = null;
+            Bindings.StopTracking();
+            TerminalContainer.Content = null;
         }
 
         private void OnWindowActivated(object sender, WindowActivatedEventArgs e)
         {
             if (e.WindowActivationState != CoreWindowActivationState.Deactivated && TerminalContainer.Content is TerminalView terminal)
             {
-                terminal.ViewModel.FocusTerminal();
+                terminal.ViewModel?.FocusTerminal();
                 ViewModel.FocusWindow();
             }
-        }
-
-        private void OnUnloaded(object sender, RoutedEventArgs e)
-        {
-            coreTitleBar.LayoutMetricsChanged -= OnLayoutMetricsChanged;
         }
 
         private void OnLoaded(object sender, RoutedEventArgs e)

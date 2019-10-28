@@ -1,5 +1,5 @@
 <p align="center">
-  <img alt="fluentterminal logo" src="./FluentTerminal.App/Assets/AppIconsDark/Square44x44Logo.altform-unplated_targetsize-256_altform-lightunplated.png" width="100px" />
+  <img alt="fluentterminal logo" src="./FluentTerminal.Package/Images/AppIcons/Square44x44Logo.altform-unplated_targetsize-256_altform-lightunplated.png" width="100px" />
   <h1 align="center">Fluent Terminal</h1>
 </p>
 
@@ -31,12 +31,19 @@ A Terminal Emulator based on UWP and web technologies.
 ![Terminal window](Screenshots/terminal.jpg)
 ![Settings window](Screenshots/settings.jpg)
 
-## Laguages
+## Languages
 - English
 - German
 - Spanish
 - French
 - Simplified Chinese
+- Indian
+- Italian
+- Dutch
+- Polish
+- Portuguese (Brasilian)
+- Romanian
+- Russians
 
 Sign up to [POEditor](https://poeditor.com/join/project/TfKNIt826z) to help with existing translations or add a new language
 

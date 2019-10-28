@@ -6,17 +6,6 @@ namespace FluentTerminal.App.Services
 {
     public interface ISettingsService
     {
-        event EventHandler<ApplicationSettings> ApplicationSettingsChanged;
-        event EventHandler<Guid> CurrentThemeChanged;
-        event EventHandler KeyBindingsChanged;
-        event EventHandler<ShellProfile> ShellProfileAdded;
-        event EventHandler<Guid> ShellProfileDeleted;
-        event EventHandler<SshProfile> SshProfileAdded;
-        event EventHandler<Guid> SshProfileDeleted;
-        event EventHandler<TerminalOptions> TerminalOptionsChanged;
-        event EventHandler<Guid> ThemeDeleted;
-        event EventHandler<TerminalTheme> ThemeAdded;
-
         void DeleteShellProfile(Guid id);
         void DeleteSshProfile(Guid id);
         void DeleteTheme(Guid id);

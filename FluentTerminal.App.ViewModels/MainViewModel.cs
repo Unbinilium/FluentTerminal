@@ -1,6 +1,7 @@
 ﻿using FluentTerminal.App.Services;
 using FluentTerminal.App.Services.EventArgs;
 using FluentTerminal.App.Services.Utilities;
+using FluentTerminal.App.ViewModels.Infrastructure;
 using FluentTerminal.Models;
 using FluentTerminal.Models.Enums;
 using GalaSoft.MvvmLight;
@@ -10,6 +11,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Threading.Tasks;
+using FluentTerminal.Models.Messages;
 
 namespace FluentTerminal.App.ViewModels
 {
@@ -31,14 +33,15 @@ namespace FluentTerminal.App.ViewModels
         public MainViewModel(ISettingsService settingsService, ITrayProcessCommunicationService trayProcessCommunicationService, IDialogService dialogService, IKeyboardCommandService keyboardCommandService,
             IApplicationView applicationView, IDispatcherTimer dispatcherTimer, IClipboardService clipboardService)
         {
+            MessengerInstance.Register<ApplicationSettingsChangedMessage>(this, OnApplicationSettingsChanged);
+            MessengerInstance.Register<CurrentThemeChangedMessage>(this, OnCurrentThemeChanged);
+            MessengerInstance.Register<ShellProfileAddedMessage>(this, OnShellProfileAdded);
+            MessengerInstance.Register<ShellProfileDeletedMessage>(this, OnShellProfileDeleted);
+            MessengerInstance.Register<SshProfileAddedMessage>(this, OnSshProfileAdded);
+            MessengerInstance.Register<SshProfileDeletedMessage>(this, OnSshProfileDeleted);
+            MessengerInstance.Register<TerminalOptionsChangedMessage>(this, OnTerminalOptionsChanged);
+
             _settingsService = settingsService;
-            _settingsService.CurrentThemeChanged += OnCurrentThemeChanged;
-            _settingsService.ApplicationSettingsChanged += OnApplicationSettingsChanged;
-            _settingsService.TerminalOptionsChanged += OnTerminalOptionsChanged;
-            _settingsService.ShellProfileAdded += OnShellProfileAdded;
-            _settingsService.ShellProfileDeleted += OnShellProfileDeleted;
-            _settingsService.SshProfileAdded += OnSshProfileAdded;
-            _settingsService.SshProfileDeleted += OnSshProfileDeleted;
 
             _trayProcessCommunicationService = trayProcessCommunicationService;
             _dialogService = dialogService;
@@ -97,7 +100,7 @@ namespace FluentTerminal.App.ViewModels
             AddLocalShellCommand = new RelayCommand(async () => await AddLocalTabAsync());
             AddSshShellCommand = new RelayCommand(async () => await AddSshTabAsync());
             AddQuickShellCommand = new RelayCommand(async () => await AddCustomCommandTabAsync());
-            ShowAboutCommand = new RelayCommand(ShowAbout);
+            ShowAboutCommand = new AsyncCommand(ShowAbout);
             ShowSettingsCommand = new RelayCommand(ShowSettings);
 
             ApplicationView.CloseRequested += OnCloseRequest;
@@ -107,26 +110,44 @@ namespace FluentTerminal.App.ViewModels
 
         private void OnClosed(object sender, EventArgs e)
         {
+            MessengerInstance.Unregister(this);
+
+            ApplicationView.CloseRequested -= OnCloseRequest;
+            ApplicationView.Closed -= OnClosed;
+            Terminals.CollectionChanged -= OnTerminalsCollectionChanged;
+
+            _keyboardCommandService.ClearCommandHandlers();
+
+            _applicationSettings = null;
+
+            AddLocalShellCommand = null;
+            AddSshShellCommand = null;
+            AddQuickShellCommand = null;
+            ShowAboutCommand = null;
+            ShowSettingsCommand = null;
+
             Closed?.Invoke(this, e);
         }
 
-        private void OnShellProfileDeleted(object sender, Guid e)
+        private void OnShellProfileDeleted(ShellProfileDeletedMessage message)
         {
-            _keyboardCommandService.DeregisterCommandHandler(e.ToString());
+            _keyboardCommandService.DeregisterCommandHandler(message.ProfileId.ToString());
         }
 
-        private void OnShellProfileAdded(object sender, ShellProfile e)
+        private void OnShellProfileAdded(ShellProfileAddedMessage message)
         {
-            _keyboardCommandService.RegisterCommandHandler(e.Id.ToString(), () => AddLocalTabOrWindowAsync(e.Id));
+            _keyboardCommandService.RegisterCommandHandler(message.ShellProfile.Id.ToString(),
+                () => AddLocalTabOrWindowAsync(message.ShellProfile.Id));
         }
 
-        private void OnSshProfileAdded(object sender, ShellProfile e)
+        private void OnSshProfileAdded(SshProfileAddedMessage message)
         {
-            _keyboardCommandService.RegisterCommandHandler(e.Id.ToString(), () => AddSshTabOrWindowAsync(e.Id));
+            _keyboardCommandService.RegisterCommandHandler(message.SshProfile.Id.ToString(),
+                () => AddSshTabOrWindowAsync(message.SshProfile.Id));
         }
-        private void OnSshProfileDeleted(object sender, Guid e)
+        private void OnSshProfileDeleted(SshProfileDeletedMessage message)
         {
-            _keyboardCommandService.DeregisterCommandHandler(e.ToString());
+            _keyboardCommandService.DeregisterCommandHandler(message.ProfileId.ToString());
         }
         
         private void OnTerminalsCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
@@ -140,8 +161,6 @@ namespace FluentTerminal.App.ViewModels
         public event EventHandler<NewWindowRequestedEventArgs> NewWindowRequested;
 
         public event EventHandler ShowSettingsRequested;
-
-        public event EventHandler ShowAboutRequested;
 
         public event EventHandler ActivatedMv;
 
@@ -157,9 +176,9 @@ namespace FluentTerminal.App.ViewModels
             ActivatedMv?.Invoke(this, EventArgs.Empty);
         }
 
-        public RelayCommand AddLocalShellCommand { get; }
-        public RelayCommand AddSshShellCommand { get; }
-        public RelayCommand AddQuickShellCommand { get; }
+        public RelayCommand AddLocalShellCommand { get; private set; }
+        public RelayCommand AddSshShellCommand { get; private set; }
+        public RelayCommand AddQuickShellCommand { get; private set; }
 
         public string WindowTitle
         {
@@ -223,9 +242,9 @@ namespace FluentTerminal.App.ViewModels
             }
         }
 
-        public RelayCommand ShowAboutCommand { get; }
+        public IAsyncCommand ShowAboutCommand { get; private set; }
 
-        public RelayCommand ShowSettingsCommand { get; }
+        public RelayCommand ShowSettingsCommand { get; private set; }
 
         public TabsPosition TabsPosition
         {
@@ -482,16 +501,16 @@ namespace FluentTerminal.App.ViewModels
             NewWindowRequested?.Invoke(this, args);
         }
 
-        private async void OnApplicationSettingsChanged(object sender, ApplicationSettings e)
+        private async void OnApplicationSettingsChanged(ApplicationSettingsChangedMessage message)
         {
             await ApplicationView.RunOnDispatcherThread(() =>
             {
-                _applicationSettings = e;
-                TabsPosition = e.TabsPosition;
+                _applicationSettings = message.ApplicationSettings;
+                TabsPosition = message.ApplicationSettings.TabsPosition;
                 RaisePropertyChanged(nameof(ShowTabsOnTop));
                 RaisePropertyChanged(nameof(ShowTabsOnBottom));
 
-                if (e.ShowCustomTitleInTitlebar)
+                if (message.ApplicationSettings.ShowCustomTitleInTitlebar)
                 {
                     WindowTitle = SelectedTerminal?.TabTitle;
                 }
@@ -523,13 +542,13 @@ namespace FluentTerminal.App.ViewModels
             }
         }
 
-        private async void OnCurrentThemeChanged(object sender, Guid e)
+        private async void OnCurrentThemeChanged(CurrentThemeChangedMessage message)
         {
             await ApplicationView.RunOnDispatcherThread(() =>
-             {
-                 var currentTheme = _settingsService.GetTheme(e);
-                 Background = currentTheme.Colors.Background;
-             });
+            {
+                var currentTheme = _settingsService.GetTheme(message.ThemeId);
+                Background = currentTheme.Colors.Background;
+            });
         }
 
         private async void OnTerminalClosed(object sender, EventArgs e)
@@ -559,11 +578,11 @@ namespace FluentTerminal.App.ViewModels
             }
         }
 
-        private async void OnTerminalOptionsChanged(object sender, TerminalOptions e)
+        private async void OnTerminalOptionsChanged(TerminalOptionsChangedMessage message)
         {
             await ApplicationView.RunOnDispatcherThread(() =>
             {
-                BackgroundOpacity = e.BackgroundOpacity;
+                BackgroundOpacity = message.TerminalOptions.BackgroundOpacity;
             });
         }
 
@@ -589,9 +608,9 @@ namespace FluentTerminal.App.ViewModels
             SelectedTerminal = Terminals[previousIndex];
         }
 
-        private void ShowAbout()
+        private Task ShowAbout()
         {
-            ShowAboutRequested?.Invoke(this, EventArgs.Empty);
+            return _dialogService.ShowAboutDialogAsync();
         }
 
         private void ShowSettings()

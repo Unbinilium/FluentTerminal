@@ -8,6 +8,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using FluentTerminal.Models.Messages;
 
 namespace FluentTerminal.App.ViewModels.Settings
 {
@@ -20,30 +21,38 @@ namespace FluentTerminal.App.ViewModels.Settings
         private double _backgroundOpacity;
         private readonly IThemeParserFactory _themeParserFactory;
         private readonly IFileSystemService _fileSystemService;
+        private readonly IImageFileSystemService _imageFileSystemService;
 
         public event EventHandler<string> SelectedThemeBackgroundColorChanged;
+        public event EventHandler<ImageFile> SelectedThemeBackgroundImageChanged;
+        public event EventHandler<ThemeViewModel> SelectedThemeChanged;
 
-        public ThemesPageViewModel(ISettingsService settingsService, IDialogService dialogService, IDefaultValueProvider defaultValueProvider,
-            IThemeParserFactory themeParserFactory, IFileSystemService fileSystemService)
+        public ThemesPageViewModel(ISettingsService settingsService,
+                                   IDialogService dialogService,
+                                   IDefaultValueProvider defaultValueProvider,
+                                   IThemeParserFactory themeParserFactory,
+                                   IFileSystemService fileSystemService,
+                                   IImageFileSystemService imageFileSystemService)
         {
             _settingsService = settingsService;
             _dialogService = dialogService;
             _defaultValueProvider = defaultValueProvider;
             _themeParserFactory = themeParserFactory;
             _fileSystemService = fileSystemService;
+            _imageFileSystemService = imageFileSystemService;
 
             CreateThemeCommand = new RelayCommand(CreateTheme);
             ImportThemeCommand = new AsyncCommand(ImportTheme);
             CloneCommand = new RelayCommand<ThemeViewModel>(CloneTheme);
 
-            _settingsService.TerminalOptionsChanged += OnTerminalOptionsChanged;
+            MessengerInstance.Register<TerminalOptionsChangedMessage>(this, OnTerminalOptionsChanged);
 
             BackgroundOpacity = _settingsService.GetTerminalOptions().BackgroundOpacity;
 
             var activeThemeId = _settingsService.GetCurrentThemeId();
             foreach (var theme in _settingsService.GetThemes())
             {
-                var viewModel = new ThemeViewModel(theme, _settingsService, _dialogService, fileSystemService, false);
+                var viewModel = new ThemeViewModel(theme, _settingsService, _dialogService, _fileSystemService, _imageFileSystemService, false);
                 viewModel.Activated += OnThemeActivated;
                 viewModel.Deleted += OnThemeDeleted;
 
@@ -75,11 +84,17 @@ namespace FluentTerminal.App.ViewModels.Settings
                 if (_selectedTheme != null)
                 {
                     _selectedTheme.BackgroundChanged -= OnSelectedThemeBackgroundChanged;
+                    _selectedTheme.BackgroundImageChanged -= OnSelectedThemeBackgroundImageChanged;
                 }
+
                 Set(ref _selectedTheme, value);
+                SelectedThemeChanged?.Invoke(this, _selectedTheme);
+
                 if (value != null)
                 {
+                    _selectedTheme.BackgroundOpacity = BackgroundOpacity;
                     value.BackgroundChanged += OnSelectedThemeBackgroundChanged;
+                    value.BackgroundImageChanged += OnSelectedThemeBackgroundImageChanged;
                 }
             }
         }
@@ -127,9 +142,17 @@ namespace FluentTerminal.App.ViewModels.Settings
 
                 try
                 {
-                    var theme = await parser.Parse(file.Name, file.Content).ConfigureAwait(true);
+                    var exportedTheme = await parser.Import(file.Name, file.Content).ConfigureAwait(true);
 
-                    AddTheme(theme);
+                    if (!string.IsNullOrWhiteSpace(exportedTheme.EncodedImage))
+                    {
+                        var importedImage = await _imageFileSystemService.ImportThemeImage(exportedTheme.BackgroundImage, exportedTheme.EncodedImage);
+                        exportedTheme.BackgroundImage = importedImage;
+                    }
+
+                    var terminalTheme = new TerminalTheme(exportedTheme);
+
+                    AddTheme(terminalTheme);
                 }
                 catch (Exception exception)
                 {
@@ -142,7 +165,7 @@ namespace FluentTerminal.App.ViewModels.Settings
         {
             _settingsService.SaveTheme(theme, true);
 
-            var viewModel = new ThemeViewModel(theme, _settingsService, _dialogService, _fileSystemService, true);
+            var viewModel = new ThemeViewModel(theme, _settingsService, _dialogService, _fileSystemService, _imageFileSystemService, true);
             viewModel.EditCommand.Execute(null);
             viewModel.Activated += OnThemeActivated;
             viewModel.Deleted += OnThemeDeleted;
@@ -182,14 +205,19 @@ namespace FluentTerminal.App.ViewModels.Settings
             }
         }
 
-        private void OnTerminalOptionsChanged(object sender, TerminalOptions e)
+        private void OnTerminalOptionsChanged(TerminalOptionsChangedMessage message)
         {
-            BackgroundOpacity = e.BackgroundOpacity;
+            BackgroundOpacity = message.TerminalOptions.BackgroundOpacity;
         }
 
         private void OnSelectedThemeBackgroundChanged(object sender, string e)
         {
             SelectedThemeBackgroundColorChanged?.Invoke(this, e);
+        }
+
+        private void OnSelectedThemeBackgroundImageChanged(object sender, ImageFile e)
+        {
+            SelectedThemeBackgroundImageChanged?.Invoke(this, e);
         }
     }
 }

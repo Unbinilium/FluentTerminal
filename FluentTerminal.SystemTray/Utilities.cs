@@ -1,54 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Net.NetworkInformation;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows.Input;
 using FluentTerminal.App.Services;
 using FluentTerminal.Models.Enums;
 
-
 namespace FluentTerminal.SystemTray
 {
     public static class Utilities
     {
-        private const int FirstDynamicPort = 49151;
-        private static readonly List<int> _sentOutPorts = new List<int>();
-
-        public static int? GetAvailablePort()
-        {
-            var usedPorts = new List<int>();
-
-            var properties = IPGlobalProperties.GetIPGlobalProperties();
-
-            var connections = properties.GetActiveTcpConnections();
-            usedPorts.AddRange(connections.Where(c => c.LocalEndPoint.Port >= FirstDynamicPort).Select(c => c.LocalEndPoint.Port));
-
-            var endPoints = properties.GetActiveTcpListeners();
-            usedPorts.AddRange(endPoints.Where(e => e.Port >= FirstDynamicPort).Select(e => e.Port));
-
-            endPoints = properties.GetActiveUdpListeners();
-            usedPorts.AddRange(endPoints.Where(e => e.Port >= FirstDynamicPort).Select(e => e.Port));
-
-            usedPorts.AddRange(_sentOutPorts);
-
-            usedPorts.Sort();
-
-            for (var i = FirstDynamicPort; i < UInt16.MaxValue; i++)
-            {
-                if (!usedPorts.Contains(i))
-                {
-                    _sentOutPorts.Add(i);
-                    return i;
-                }
-            }
-            return null;
-        }
-
         public static Key ExtendVirtualKeyToInputKey(ExtendedVirtualKey key)
         {
             switch (key)
@@ -515,30 +478,49 @@ namespace FluentTerminal.SystemTray
             {
                 return GetMoshPath();
             }
+            else if (location.Equals(Constants.SshCommandName, StringComparison.OrdinalIgnoreCase) ||
+                     location.Equals($"{Constants.SshCommandName}.exe", StringComparison.OrdinalIgnoreCase))
+            {
+                return GetSshPath();
+            }
 
             return location;
         }
 
-#if X64
-        private const string MoshArchDir = @"x64";
-#else
-        private const string MoshArchDir = @"x86";
-#endif
+        private static string GetSshPath()
+        {
+            //
+            // See https://stackoverflow.com/a/25919981
+            //
+
+            string path;
+            if (Environment.Is64BitOperatingSystem && !Environment.Is64BitProcess)
+            {
+                path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), @"Sysnative");
+            }
+            else
+            {
+                path = Environment.GetFolderPath(Environment.SpecialFolder.System);
+            }
+
+            path = Path.Combine(path, @"OpenSSH\ssh.exe");
+            return System.IO.File.Exists(path) ? path : null;
+        }
 
         private static string GetMoshPath()
         {
-            DirectoryInfo dir = new FileInfo(Assembly.GetExecutingAssembly().Location).Directory;
+            var directory = new FileInfo(Assembly.GetExecutingAssembly().Location).Directory;
 
-            while (dir != null)
+            while (directory != null)
             {
-                string path = Path.Combine(dir.FullName, "MoshExecutables", MoshArchDir, "mosh.exe");
+                string path = Path.Combine(directory.FullName, "mosh.exe");
 
-                if (System.IO.File.Exists(path))
+                if (File.Exists(path))
                 {
                     return path;
                 }
 
-                dir = dir.Parent;
+                directory = directory.Parent;
             }
 
             return null;

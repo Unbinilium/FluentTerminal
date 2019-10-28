@@ -10,6 +10,8 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using FluentTerminal.Models.Messages;
+using GalaSoft.MvvmLight.Messaging;
 using Xunit;
 
 namespace FluentTerminal.App.Services.Test
@@ -159,7 +161,8 @@ namespace FluentTerminal.App.Services.Test
             };
             var currentThemeChangedEventInvoked = false;
             var settingsService = new SettingsService(defaultValueProvider, applicationDataContainers);
-            settingsService.CurrentThemeChanged += (s, e) => currentThemeChangedEventInvoked = true;
+            Messenger.Default.Register<CurrentThemeChangedMessage>(this,
+                message => currentThemeChangedEventInvoked = true);
 
             settingsService.SaveCurrentThemeId(currentThemeId);
 
@@ -206,7 +209,8 @@ namespace FluentTerminal.App.Services.Test
                 ShellProfiles = Mock.Of<IApplicationDataContainer>()
             };
             var settingsService = new SettingsService(defaultValueProvider, applicationDataContainers);
-            settingsService.CurrentThemeChanged += (s, e) => currentThemeChangedEventInvoked = true;
+            Messenger.Default.Register<CurrentThemeChangedMessage>(this,
+                message => currentThemeChangedEventInvoked = true);
 
             settingsService.SaveTheme(theme);
 
@@ -363,7 +367,8 @@ namespace FluentTerminal.App.Services.Test
                 ShellProfiles = Mock.Of<IApplicationDataContainer>()
             };
             var settingsService = new SettingsService(defaultValueProvider, applicationDataContainers);
-            settingsService.TerminalOptionsChanged += (s, e) => terminalOptionsChangedEventInvoked = true;
+            Messenger.Default.Register<TerminalOptionsChangedMessage>(this,
+                message => terminalOptionsChangedEventInvoked = true);
 
             settingsService.SaveTerminalOptions(terminalOptions);
 
@@ -430,7 +435,8 @@ namespace FluentTerminal.App.Services.Test
                 ShellProfiles = Mock.Of<IApplicationDataContainer>()
             };
             var settingsService = new SettingsService(defaultValueProvider, applicationDataContainers);
-            settingsService.ApplicationSettingsChanged += (s, e) => applicationSettingsChangedEventInvoked = true;
+            Messenger.Default.Register<ApplicationSettingsChangedMessage>(this,
+                a => applicationSettingsChangedEventInvoked = true);
 
             settingsService.SaveApplicationSettings(applicationSettings);
 
@@ -528,7 +534,8 @@ namespace FluentTerminal.App.Services.Test
                 ShellProfiles = Mock.Of<IApplicationDataContainer>()
             };
             var settingsService = new SettingsService(defaultValueProvider, applicationDataContainers);
-            settingsService.KeyBindingsChanged += (s, e) => keyBindingsChangedEventInvoked = true;
+            Messenger.Default.Register<KeyBindingsChangedMessage>(this,
+                message => keyBindingsChangedEventInvoked = true);
 
             settingsService.SaveKeyBindings(command.ToString(), keyBindings);
 
@@ -574,7 +581,8 @@ namespace FluentTerminal.App.Services.Test
                 ShellProfiles = Mock.Of<IApplicationDataContainer>()
             };
             var settingsService = new SettingsService(defaultValueProvider, applicationDataContainers);
-            settingsService.KeyBindingsChanged += (s, e) => keyBindingsChangedEventInvoked = true;
+            Messenger.Default.Register<KeyBindingsChangedMessage>(this,
+                message => keyBindingsChangedEventInvoked = true);
 
             settingsService.ResetKeyBindings();
 
