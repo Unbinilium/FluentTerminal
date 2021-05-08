@@ -13,7 +13,7 @@ namespace FluentTerminal.SystemTray
 
         public SystemTrayApplicationContext()
         {
-            var openMenuItem = new MenuItem("Show", new EventHandler(OpenApp));
+            var openMenuItem = new MenuItem("Show", new EventHandler(OpenAppAsync));
             var newWindowItem = new MenuItem("New terminal", new EventHandler(NewWindow));
             var settingsMenuItem = new MenuItem("Show settings", new EventHandler(ShowSettings));
             var exitMenuItem = new MenuItem("Exit", new EventHandler(Exit));
@@ -21,16 +21,16 @@ namespace FluentTerminal.SystemTray
             openMenuItem.DefaultItem = true;
 
             _notifyIcon = new NotifyIcon();
-            _notifyIcon.DoubleClick += OpenApp;
+            _notifyIcon.DoubleClick += OpenAppAsync;
             _notifyIcon.Text = "Fluent Terminal";
 
             if (SystemUsesLightTheme())
             {
-                _notifyIcon.Icon = Properties.Resources.Square44x44Logo_scale_100_altform_lightunplated;
+                _notifyIcon.Icon = Properties.Resources.Icon_mono_light;
             }
             else
             {
-                _notifyIcon.Icon = Properties.Resources.Square44x44Logo_scale_100;
+                _notifyIcon.Icon = Properties.Resources.Icon_mono_dark;
             }
 
             _notifyIcon.ContextMenu = new ContextMenu(new MenuItem[] { openMenuItem, newWindowItem, settingsMenuItem, exitMenuItem });
@@ -39,6 +39,7 @@ namespace FluentTerminal.SystemTray
 
         private void Exit(object sender, EventArgs e)
         {
+            _notifyIcon.Dispose(); // cleans up the tray icon
             Application.Exit();
         }
 
@@ -47,7 +48,7 @@ namespace FluentTerminal.SystemTray
             Process.Start("flute.exe", "new");
         }
 
-        private async void OpenApp(object sender, EventArgs e)
+        private async void OpenAppAsync(object sender, EventArgs e)
         {
             var appListEntries = await Package.Current.GetAppListEntriesAsync();
             await appListEntries.First().LaunchAsync();
@@ -78,7 +79,7 @@ namespace FluentTerminal.SystemTray
                     }
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return false;
             }

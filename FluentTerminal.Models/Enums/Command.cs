@@ -7,14 +7,10 @@
         PreviousTab,
         NewTab,
         NewWindow,
-        ConfigurableNewTab,
-        ConfigurableNewWindow,
         NewSshTab,
         NewSshWindow,
         NewCustomCommandTab, 
         NewCustomCommandWindow,
-        SavedSshNewTab,
-        SavedSshNewWindow,
         ChangeTabTitle,
         CloseTab,
         ShowSettings,
@@ -22,6 +18,7 @@
         Paste,
         PasteWithoutNewlines,
         Search,
+        CloseSearch,
         ToggleFullScreen,
         SelectAll,
         Clear,
@@ -34,6 +31,10 @@
         SwitchToTerm7,
         SwitchToTerm8,
         SwitchToTerm9,
-        DuplicateTab
+        DuplicateTab,
+        ReconnectTab,
+        IncreaseFontSize,
+        DecreaseFontSize,
+        ResetFontSize
     }
 }

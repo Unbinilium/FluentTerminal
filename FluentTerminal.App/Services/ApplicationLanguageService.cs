@@ -10,18 +10,37 @@ namespace FluentTerminal.App.Services
         private readonly Dictionary<string, string> _languages = new Dictionary<string, string>
         {
             [""] = "System default",
-            ["zh-Hans-CN"] = "Chinese (Traditional)",
+            ["ar"] = "العربية",
+            ["ar-IQ"] = "اللهجة العراقية",
+            ["az-Latn"] = "azərbaycan dili",
+            ["bs"] = "bosanski",
             ["de"] = "Deutsch",
             ["en"] = "English",
+            ["eo"] = "Esperanto",
             ["es"] = "Español",
+            ["fa"] = "فارسی",
             ["fr"] = "Français",
+            ["he"] = "עברית",
             ["hi"] = "हिन्दुस्तानी",
+            ["hr"] = "Hrvatski",
+            ["hu"] = "magyar",
+            ["id"] = "Bahasa Indonesia",
             ["it"] = "Italiano",
+            ["ja"] = "日本語",
+            ["ko"] = "한국어",
             ["nl"] = "Nederlands",
             ["pl"] = "Polski",
             ["pt-BR"] = "Português-Brasil",
             ["ro"] = "Română",
-            ["ru"] = "Pусский"
+            ["ru"] = "Pусский",
+            ["sl"] = "Slovenščina",
+            ["sv"] = "svenska",
+            ["tr"] = "Türkçe",
+            ["ug-Arab"] = "ئۇيغۇر تىلى",
+            ["uk"] = "Українська",
+            ["uz-Latn"] = "O'zbek tili",
+            ["zh-Hans"] = "简体中文",
+            ["zh-Hant"] = "繁體中文"
         };
 
         public IEnumerable<string> Languages => _languages.Values;
@@ -38,6 +57,10 @@ namespace FluentTerminal.App.Services
 
         public string GetCurrentLanguage()
         {
+            if (!_languages.ContainsKey(ApplicationLanguages.PrimaryLanguageOverride))
+            {
+                ApplicationLanguages.PrimaryLanguageOverride = "en";
+            }
             return _languages[ApplicationLanguages.PrimaryLanguageOverride];
         }
     }

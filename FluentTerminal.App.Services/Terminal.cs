@@ -11,9 +11,10 @@ namespace FluentTerminal.App.Services
     {
         private readonly ITrayProcessCommunicationService _trayProcessCommunicationService;
         private Func<Task<string>> _selectedTextCallback;
-        private bool _closingFromUI;
+        private bool _closingFromUi;
         private bool _exited;
         private readonly bool _requireShellProcessStart;
+        private string _fallbackTitle;
 
         public Terminal(ITrayProcessCommunicationService trayProcessCommunicationService, byte? terminalId = null)
         {
@@ -21,6 +22,12 @@ namespace FluentTerminal.App.Services
             _trayProcessCommunicationService.TerminalExited += OnTerminalExited;
             Id = terminalId ?? trayProcessCommunicationService.GetNextTerminalId();
             _requireShellProcessStart = !terminalId.HasValue;
+        }
+
+        public void Reconnect()
+        {
+            _exited = false;
+            _trayProcessCommunicationService.TerminalExited += OnTerminalExited;
         }
 
         private void OnTerminalExited(object sender, TerminalExitStatus status)
@@ -33,7 +40,7 @@ namespace FluentTerminal.App.Services
             _exited = true;
             Exited?.Invoke(this, status.ExitCode);
 
-            if (_closingFromUI || status.ExitCode <= 0)
+            if (_closingFromUi || status.ExitCode <= 0)
             {
                 Closed?.Invoke(this, System.EventArgs.Empty);
             }
@@ -68,23 +75,23 @@ namespace FluentTerminal.App.Services
         /// </summary>
         public event EventHandler<string> TitleChanged;
 
-        public string FallbackTitle { get; private set; }
-
         public byte Id { get; }
+
+        public ShellProfile Profile { get; private set; }
 
         /// <summary>
         /// To be called by either view or viewmodel
         /// </summary>
-        public async Task Close()
+        public Task CloseAsync()
         {
             if (_exited)
             {
                 Closed?.Invoke(this, System.EventArgs.Empty);
-                return;
+                return Task.CompletedTask;
             }
-            _closingFromUI = true;
+            _closingFromUi = true;
             _trayProcessCommunicationService.UnsubscribeFromTerminalOutput(Id);
-            await _trayProcessCommunicationService.CloseTerminal(Id).ConfigureAwait(true);
+            return _trayProcessCommunicationService.CloseTerminalAsync(Id);
         }
 
         /// <summary>
@@ -115,9 +122,9 @@ namespace FluentTerminal.App.Services
         /// <summary>
         /// To be called by view
         /// </summary>
-        public async Task SetSize(TerminalSize size)
+        public async Task SetSizeAsync(TerminalSize size)
         {
-            await _trayProcessCommunicationService.ResizeTerminal(Id, size);
+            await _trayProcessCommunicationService.ResizeTerminalAsync(Id, size).ConfigureAwait(false);
             SizeChanged?.Invoke(this, size);
         }
 
@@ -128,19 +135,18 @@ namespace FluentTerminal.App.Services
         {
             if (string.IsNullOrWhiteSpace(title))
             {
-                title = FallbackTitle;
+                title = _fallbackTitle;
             }
             TitleChanged?.Invoke(this, title);
         }
 
         /// <summary>
-        /// to be called by view when ready
+        /// To be called by view when ready
         /// </summary>
-        /// <param name="shellProfile"></param>
-        /// <param name="size"></param>
-        /// <param name="sessionType"></param>
-        public async Task<TerminalResponse> StartShellProcess(ShellProfile shellProfile, TerminalSize size, SessionType sessionType, string termState)
+        public async Task<TerminalResponse> StartShellProcessAsync(ShellProfile shellProfile, TerminalSize size, SessionType sessionType, string termState)
         {
+            Profile = shellProfile;
+
             if (!_requireShellProcessStart && !string.IsNullOrEmpty(termState))
             {
                 OutputReceived?.Invoke(this, Encoding.UTF8.GetBytes(termState));
@@ -150,24 +156,25 @@ namespace FluentTerminal.App.Services
 
             if (_requireShellProcessStart)
             {
-                var response = await _trayProcessCommunicationService.CreateTerminal(Id, size, shellProfile, sessionType).ConfigureAwait(true);
+                var response = await _trayProcessCommunicationService
+                    .CreateTerminalAsync(Id, size, shellProfile, sessionType).ConfigureAwait(false);
 
                 if (response.Success)
                 {
-                    FallbackTitle = response.ShellExecutableName;
-                    SetTitle(FallbackTitle);
+                    _fallbackTitle = response.Name;
+                    SetTitle(_fallbackTitle);
                 }
                 return response;
             }
             else
             {
-                return await _trayProcessCommunicationService.PauseTerminalOutput(Id, false);
+                return await _trayProcessCommunicationService.PauseTerminalOutputAsync(Id, false);
             }
         }
 
         public Task Write(byte[] data)
         {
-            return _trayProcessCommunicationService.Write(Id, data);
+            return _trayProcessCommunicationService.WriteAsync(Id, data);
         }
 
         /// <summary>

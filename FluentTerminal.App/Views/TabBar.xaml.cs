@@ -2,11 +2,11 @@
 using FluentTerminal.App.Services.EventArgs;
 using FluentTerminal.App.Services.Utilities;
 using FluentTerminal.App.ViewModels;
-using GalaSoft.MvvmLight.Command;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Input;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 using Windows.UI.Xaml;
@@ -14,13 +14,14 @@ using Windows.UI.Xaml.Controls;
 
 namespace FluentTerminal.App.Views
 {
+    // ReSharper disable once RedundantExtendsListEntry
     public sealed partial class TabBar : UserControl
     {
         public static readonly DependencyProperty ItemsSourceProperty =
             DependencyProperty.Register(nameof(ItemsSource), typeof(ObservableCollection<TerminalViewModel>), typeof(TabBar), new PropertyMetadata(null));
 
         public static readonly DependencyProperty MyPropertyProperty =
-            DependencyProperty.Register(nameof(AddCommand), typeof(RelayCommand), typeof(TabBar), new PropertyMetadata(null));
+            DependencyProperty.Register(nameof(AddCommand), typeof(ICommand), typeof(TabBar), new PropertyMetadata(null));
 
         public static readonly DependencyProperty SelectedItemProperty =
             DependencyProperty.Register(nameof(SelectedItem), typeof(object), typeof(TabBar), new PropertyMetadata(null));
@@ -31,9 +32,11 @@ namespace FluentTerminal.App.Views
         {
             InitializeComponent();
             _scrollableWidthChangedToken = ScrollViewer.RegisterPropertyChangedCallback(ScrollViewer.ScrollableWidthProperty, OnScrollableWidthChanged);
-            ListView.SelectionChanged += OnListViewSelectionChanged;
-            ScrollLeftButton.Tapped += OnScrollLeftButtonTapped;
-            ScrollRightButton.Tapped += OnScrollRightButtonTapped;
+        }
+
+        private void OnListViewSizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            SetScrollButtonsEnabledState();
         }
 
         public void DisposalPrepare()
@@ -48,14 +51,11 @@ namespace FluentTerminal.App.Views
             Bindings.StopTracking();
 
             ScrollViewer.UnregisterPropertyChangedCallback(ScrollViewer.ScrollableWidthProperty, _scrollableWidthChangedToken);
-            ListView.SelectionChanged -= OnListViewSelectionChanged;
-            ScrollLeftButton.Tapped -= OnScrollLeftButtonTapped;
-            ScrollRightButton.Tapped -= OnScrollRightButtonTapped;
         }
 
-        public RelayCommand AddCommand
+        public ICommand AddCommand
         {
-            get { return (RelayCommand)GetValue(MyPropertyProperty); }
+            get { return (ICommand)GetValue(MyPropertyProperty); }
             set { SetValue(MyPropertyProperty, value); }
         }
 
@@ -71,37 +71,23 @@ namespace FluentTerminal.App.Views
             set { SetValue(SelectedItemProperty, value); }
         }
 
-        private void OnListViewSelectionChanged(object sender, SelectionChangedEventArgs e)
+        private async void OnListViewSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            var item = ListView.SelectedItem;
-            if (item != null)
+            if (!(ListView.SelectedItem is { } item)) return;
+
+            var container = ListView.ContainerFromItem(item);
+
+            while (container == null)
             {
-                var container = ListView.ContainerFromItem(item);
+                // We need to ConfigureAwait(true) because the UI thread is needed below.
+                await Task.Delay(30).ConfigureAwait(true);
 
-                if (container != null)
-                {
-                    ((UIElement)container).StartBringIntoView();
-                    SetScrollButtonsEnabledState();
-                }
-                else
-                {
-                    Task.Run(async () =>
-                    {
-                        do
-                        {
-                            await Task.Delay(50);
-                            await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () => container = ListView.ContainerFromItem(item));
-                        }
-                        while (container == null);
-
-                        await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
-                        {
-                            ((UIElement)container).StartBringIntoView();
-                            SetScrollButtonsEnabledState();
-                        });
-                    });
-                }
+                container = ListView.ContainerFromItem(item);
             }
+
+            ((UIElement)container).StartBringIntoView();
+
+            SetScrollButtonsEnabledState();
         }
 
         private void OnScrollableWidthChanged(DependencyObject sender, DependencyProperty property)
@@ -151,8 +137,11 @@ namespace FluentTerminal.App.Views
         {
             Logger.Instance.Debug($"ListView_DragEnter.");
             e.AcceptedOperation = DataPackageOperation.Move;
-            e.DragUIOverride.IsGlyphVisible = false;
-            e.DragUIOverride.Caption = I18N.Translate("DropTabHere");
+            if (e.DragUIOverride is { } dragUiOverride)
+            {
+                dragUiOverride.IsGlyphVisible = false;
+                dragUiOverride.Caption = I18N.Translate("DropTabHere");
+            }
         }
 
         private async void ListView_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
@@ -165,8 +154,8 @@ namespace FluentTerminal.App.Views
             var item = e.Items.FirstOrDefault();
             if (item is TerminalViewModel model)
             {
-                await model.TrayProcessCommunicationService.PauseTerminalOutput(model.Terminal.Id, true);
-                e.Data.Properties.Add(Constants.TerminalViewModelStateId, await model.Serialize());
+                await model.TrayProcessCommunicationService.PauseTerminalOutputAsync(model.Terminal.Id, true);
+                e.Data.Properties.Add(Constants.TerminalViewModelStateId, await model.SerializeAsync());
             }
         }
 
@@ -189,7 +178,7 @@ namespace FluentTerminal.App.Views
                     TabDraggingCompleted?.Invoke(sender, model);
                 }
 
-                model.TrayProcessCommunicationService.PauseTerminalOutput(model.Terminal.Id, false);
+                model.TrayProcessCommunicationService.PauseTerminalOutputAsync(model.Terminal.Id, false);
             }
         }
 

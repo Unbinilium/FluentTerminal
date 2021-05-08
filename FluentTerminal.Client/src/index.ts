@@ -1,33 +1,37 @@
-import { Terminal, ITerminalOptions, ILinkMatcherOptions } from 'xterm';
+import { Terminal, ITerminalOptions, ILinkMatcherOptions, FontWeight } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import { SearchAddon } from 'xterm-addon-search';
 import { WebLinksAddon } from 'xterm-addon-web-links';
-import { SerializeAddon } from "./xterm-addon-serialize/src/SerializeAddon";
-
-
+import { SerializeAddon } from "xterm-addon-serialize";
+import { Unicode11Addon } from "xterm-addon-unicode11";
 
 interface ExtendedWindow extends Window {
   keyBindings: any[];
-  term: any;
+  term: Terminal;
   terminalBridge: any;
+  hoveredUri: string;
 
   createTerminal(options: any, theme: any, keyBindings: any): void;
   connectToWebSocket(url: string): void;
   changeTheme(theme: any): void;
   changeOptions(options: any): void;
   changeKeyBindings(keyBindings: any): void;
-  findNext(content: string): void;
-  findPrevious(content: string): void;
+  findNext(content: string, caseSensitive: boolean, wholeWord: boolean, regex: boolean): void;
+  findPrevious(content: string, caseSensitive: boolean, wholeWord: boolean, regex: boolean): void;
   serializeTerminal() : void;
+  setFontSize(fontSize: number): void;
 }
 
 declare var window: ExtendedWindow;
 
-let term: any;
+let term: Terminal;
 let fitAddon: FitAddon;
 let searchAddon: SearchAddon;
 let serializeAddon: SerializeAddon;
 let webLinksAddon: WebLinksAddon;
+let unicode11Addon: Unicode11Addon;
+let altGrPressed = false;
+let filterOutOpenSSHOutput = false;
 
 const terminalContainer = document.getElementById('terminal-container');
 
@@ -39,6 +43,13 @@ function DecodeSpecialChars(data: string) {
   data = replaceAll("&quot;", "\"", data);
   data = replaceAll("&squo;", "'", data);
   return replaceAll("&bsol;", "\\", data);
+}
+
+window.setFontSize = (fontSize: number) => {
+  if (fontSize > 0) {
+    term.setOption('fontSize', fontSize);
+    fitAddon.fit();
+  }
 }
 
 window.serializeTerminal = () => {
@@ -54,6 +65,7 @@ window.createTerminal = (options, theme, keyBindings) => {
   theme = JSON.parse(theme);
 
   window.keyBindings = JSON.parse(keyBindings);
+  window.hoveredUri = "";
 
   options = JSON.parse(options);
 
@@ -62,8 +74,8 @@ window.createTerminal = (options, theme, keyBindings) => {
   var terminalOptions: ITerminalOptions = {
     fontFamily: options.fontFamily,
     fontSize: options.fontSize,
-    fontWeight: options.boldText ? 'bold' : 'normal',
-    fontWeightBold: options.boldText ? '400' : 'bold',
+    fontWeight: options.fontWeight,
+    fontWeightBold: convertBoldText(options.fontWeight),
     cursorStyle: options.cursorStyle,
     cursorBlink: options.cursorBlink,
     bellStyle: options.bellStyle,
@@ -77,49 +89,13 @@ window.createTerminal = (options, theme, keyBindings) => {
   term = new Terminal(terminalOptions);
 
   const linkMatcherOptions: ILinkMatcherOptions = {
-    leaveCallback: () => window.onmouseup = (e) => defaultOnMouseUpHandler(e),
-    willLinkActivate: (event: MouseEvent, uri: string) => {
-      window.onmouseup = (e) => linkHoverOnMouseUpHandler(event, uri);
-      return true;
+    leaveCallback: () => {
+      window.hoveredUri = "";
+    },
+    tooltipCallback: (event: MouseEvent, uri: string) => {
+      window.hoveredUri = uri;
     }
   };
-
-  function defaultOnMouseUpHandler(e: MouseEvent): void {
-    if (e.button == 1) {
-      window.terminalBridge.notifyMiddleClick(e.clientX, e.clientY, term.hasSelection());
-    } else if (e.button == 2) {
-      window.terminalBridge.notifyRightClick(e.clientX, e.clientY, term.hasSelection());
-    }
-  }
-  
-  function linkHoverOnMouseUpHandler(e: MouseEvent, u: string): void {
-    if (e.button == 1) {
-      window.terminalBridge.notifyMiddleClick(e.clientX, e.clientY, term.hasSelection());
-    } else if (e.button == 2) {
-      let pos = findInMouseRow(u, e.clientY);
-      if(pos !== undefined) {
-        term.select(pos.col, pos.row, u.length);
-        window.terminalBridge.notifyRightClick(e.clientX, e.clientY, term.hasSelection());
-      }
-    }
-  }
-  
-  function findInMouseRow(str: string, mouseY: number): {col: Number, row: Number} | undefined {
-    const lineHeight: number = Math.round(window.innerHeight / window.term.rows) - 1;
-    const mouseRow: number = mouseY / lineHeight;
-    let col: number, row: number = (mouseRow === Math.ceil(mouseRow) ? mouseRow : Math.floor(mouseRow)) - 1;
-    let line = window.term.buffer.getLine(row);
-
-    if(line === undefined) return;
-    
-    col = line.translateToString().indexOf(str);
-    if (col === -1) return;
-    
-    return {
-      col: col, 
-      row: row
-    };
-  }
 
   searchAddon = new SearchAddon();
   term.loadAddon(searchAddon);
@@ -129,15 +105,65 @@ window.createTerminal = (options, theme, keyBindings) => {
   term.loadAddon(serializeAddon);
   webLinksAddon = new WebLinksAddon((_, u) => window.open(u), linkMatcherOptions);
   term.loadAddon(webLinksAddon);
+  unicode11Addon = new Unicode11Addon();
+  term.loadAddon(unicode11Addon);
+  term.unicode.activeVersion = '11';
 
   window.term = term;
 
+  function stringToUint8Array(param: string) {
+    var str = unescape(encodeURIComponent(param));
+    var charList = str.split('');
+    var output = [];
+    for (var i = 0; i < charList.length; i++) {
+      output.push(charList[i].charCodeAt(0));
+    }
+    return new Uint8Array(output);
+  }
+
+  function uint8ArrayToString(param: Uint8Array) {
+    var encodedString = String.fromCharCode.apply(null, param);
+    return decodeURIComponent(escape(encodedString));
+  }
+
+  window.terminalBridge.onsessionrestart = ((param: string) => {
+    if (filterOutOpenSSHOutput == false) {
+      filterOutOpenSSHOutput = true;
+    }
+  });
+
   window.terminalBridge.onoutput = (data => {
+    if (filterOutOpenSSHOutput == true) {
+      var str = uint8ArrayToString(data);
+      var sessionStarted = str.search(/(\x1b\[H\x1b\[\?25h)|(\x1b\[2;1H\x1b\]0;OpenSSH SSH client)/u);
+
+      if (sessionStarted != -1) {
+        filterOutOpenSSHOutput = false;
+      }
+
+      // Filter out new line characters following by cursor movement CSIs X and C
+      str = replaceAll(/\n\x1b\[\d*X\x1b\[\d*C/u, "", str);
+      // Filter out J (clear screen) CSIs and H (set cursor position) CSIs
+      str = replaceAll(/\x1b\[\d*J/u, "", str);
+      // Filter out H (set cursor position) CSIs
+      str = replaceAll(/\x1b\[\d*;?\d*H/u, "", str);
+
+      data = stringToUint8Array(str);
+    }
+
     term.writeUtf8(data);
+  });
+
+  window.terminalBridge.onpaste = (text => {
+    term.paste(text);
   });
 
   term.onData(data => {
     window.terminalBridge.inputReceived(data);
+  });
+
+  term.onBinary(binary => {
+    window.terminalBridge.binaryReceived(binary);
   });
 
   term.onResize(({ cols, rows }) => {
@@ -158,18 +184,46 @@ window.createTerminal = (options, theme, keyBindings) => {
 
   setPadding(options.padding);
 
-  let resizeTimeout: any;
+  let resizeTimeout: NodeJS.Timeout;
   window.onresize = function () {
     clearTimeout(resizeTimeout);
     resizeTimeout = setTimeout(() => fitAddon.fit(), 500);
   }
 
-  window.onmouseup = (e) => defaultOnMouseUpHandler(e);
+  window.onmouseup = (e) => {
+    if (e.button == 1) {
+      window.terminalBridge.notifyMiddleClick(e.clientX, e.clientY, term.hasSelection(), window.hoveredUri);
+    } else if (e.button == 2) {
+      window.terminalBridge.notifyRightClick(e.clientX, e.clientY, term.hasSelection(), window.hoveredUri);
+    }
+  }
+
+  window.onkeydown = (e) => {
+    // Disable WebView zooming to prevent crash on too small font size
+    if ((e.ctrlKey && !e.altKey && (e.keyCode === 189 || e.keyCode === 187)) ||
+        (e.ctrlKey && (e.key === "Add" || e.key === "Subtract"))) {
+      e.preventDefault();
+    }
+  }
+
+  window.addEventListener("wheel", function(event){
+    // Disable WebView zooming to prevent crash on too small font size
+    if(event.ctrlKey){
+      event.preventDefault();
+    }
+  });
 
   term.attachCustomKeyEventHandler(function (e) {
-    if (e.type != "keydown") {
+    if (e.altKey && e.type === "keydown" && e.location === 2) {
+        altGrPressed = true;
+    } else if (e.altKey && e.type === "keyup" && e.key === "Control") {
+      altGrPressed = false
+    }
+
+    if (e.type != "keydown" || altGrPressed) {
       return true;
     }
+
     for (var i = 0; i < window.keyBindings.length; i++) {
       var keyBinding = window.keyBindings[i];
       if (keyBinding.ctrl == e.ctrlKey
@@ -190,7 +244,9 @@ window.createTerminal = (options, theme, keyBindings) => {
             term.selectAll();
             return false;
           }
-
+          if (keyBinding.command == 'CloseSearch') {
+            return true;
+          }
 
           e.preventDefault();
           window.terminalBridge.invokeCommand(keyBinding.command);
@@ -222,8 +278,8 @@ window.changeOptions = (options) => {
   term.setOption('cursorStyle', options.cursorStyle);
   term.setOption('fontFamily', options.fontFamily);
   term.setOption('fontSize', options.fontSize);
-  term.setOption('fontWeight', options.boldText ? 'bold' : 'normal');
-  term.setOption('fontWeightBold', options.boldText ? 'bolder' : 'bold');
+  term.setOption('fontWeight', options.fontWeight);
+  term.setOption('fontWeightBold', convertBoldText(options.fontWeight));
   term.setOption('scrollback', options.scrollBackLimit);
   term.setOption('wordSeparator', DecodeSpecialChars(options.wordSeparator));
   setScrollBarStyle(options.scrollBarStyle);
@@ -248,14 +304,18 @@ window.changeKeyBindings = (keyBindings) => {
   window["keyBindings"] = keyBindings;
 }
 
-window.findNext = (content: string) => {
-  searchAddon.findNext(content);
+window.findNext = (content: string, caseSensitive: boolean, wholeWord: boolean, regex: boolean) => {
+  searchAddon.findNext(content, { caseSensitive: caseSensitive, wholeWord: wholeWord, regex: regex });
 }
 
-window.findPrevious = (content: string) => {
-  searchAddon.findPrevious(content);
+window.findPrevious = (content: string, caseSensitive: boolean, wholeWord: boolean, regex: boolean) => {
+  searchAddon.findPrevious(content, { caseSensitive: caseSensitive, wholeWord: wholeWord, regex: regex });
 }
 
 document.oncontextmenu = function () {
   return false;
 };
+
+function convertBoldText(fontWeight: FontWeight) : FontWeight {
+  return parseInt(fontWeight.toString()) > 600 ? '900' : 'bold';
+}

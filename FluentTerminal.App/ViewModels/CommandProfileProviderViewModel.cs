@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
@@ -13,7 +11,6 @@ using FluentTerminal.App.Services;
 using FluentTerminal.App.Services.Utilities;
 using FluentTerminal.App.ViewModels.Profiles;
 using FluentTerminal.Models;
-using Newtonsoft.Json;
 
 namespace FluentTerminal.App.ViewModels
 {
@@ -21,17 +18,59 @@ namespace FluentTerminal.App.ViewModels
     {
         #region Static
 
-        private static readonly Regex CommandValidationRx = new Regex(@"^(?<cmd>[^\s\.]+)(\.exe)?(\s+(?<args>\S.*))?$",
-            RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex WhiteSpaceRx = new Regex(@"\s", RegexOptions.Compiled);
+
+        private static string ExtractCommandAndArgs(string commandAndArgs, out string args)
+        {
+            args = null;
+
+            commandAndArgs = commandAndArgs?.Trim();
+
+            if (string.IsNullOrEmpty(commandAndArgs)) return commandAndArgs;
+
+            switch (commandAndArgs[0])
+            {
+                case '\'':
+                case '"':
+
+                    for (var i = 1; i < commandAndArgs.Length; ++i)
+                    {
+                        if (commandAndArgs[0] == commandAndArgs[i])
+                        {
+                            args = commandAndArgs.Length > i + 1
+                                ? commandAndArgs.Substring(i + 1).Trim()
+                                : string.Empty;
+
+                            return commandAndArgs.Substring(1, i - 1).Trim();
+                        }
+                    }
+
+                    return commandAndArgs;
+
+                default:
+
+                    var match = WhiteSpaceRx.Match(commandAndArgs);
+
+                    if (match.Success)
+                    {
+                        args = commandAndArgs.Substring(match.Index).Trim();
+
+                        return commandAndArgs.Substring(0, match.Index).Trim();
+                    }
+
+                    return commandAndArgs;
+            }
+        }
 
         #endregion Static
 
         #region Fields
 
         private readonly ITrayProcessCommunicationService _trayProcessCommunicationService;
-        private readonly IApplicationDataContainer _historyContainer;
+        private readonly ICommandHistoryService _historyService;
 
-        private List<CommandItemViewModel> _allCommands;
+        private readonly List<CommandItemViewModel> _allCommands;
+        private readonly Lazy<List<ShellProfile>> _allProfiles;
 
         private string _processedFilter;
 
@@ -50,7 +89,7 @@ namespace FluentTerminal.App.ViewModels
         public string Command
         {
             get => _command;
-            set => Set(ref _command, value);
+            set => SetProperty(ref _command, value);
         }
 
         private ObservableCollection<CommandItemViewModel> _commands;
@@ -58,7 +97,7 @@ namespace FluentTerminal.App.ViewModels
         public ObservableCollection<CommandItemViewModel> Commands
         {
             get => _commands;
-            private set => Set(ref _commands, value);
+            private set => SetProperty(ref _commands, value);
         }
 
         #endregion Properties
@@ -66,16 +105,25 @@ namespace FluentTerminal.App.ViewModels
         #region Constructor
 
         public CommandProfileProviderViewModel(ISettingsService settingsService, IApplicationView applicationView,
-            ITrayProcessCommunicationService trayProcessCommunicationService,
-            IApplicationDataContainer historyContainer, ShellProfile original = null) : base(settingsService,
-            applicationView, false,
+            ITrayProcessCommunicationService trayProcessCommunicationService, ICommandHistoryService historyService,
+            ShellProfile original = null) : base(settingsService, applicationView, false,
             original ?? new ShellProfile
-                {UseConPty = ApiInformation.IsApiContractPresent("Windows.Foundation.UniversalApiContract", 7)})
+            {
+                UseConPty = settingsService.GetApplicationSettings().UseConPty &&
+                            ApiInformation.IsApiContractPresent("Windows.Foundation.UniversalApiContract", 7)
+            })
         {
             _trayProcessCommunicationService = trayProcessCommunicationService;
-            _historyContainer = historyContainer;
+            _historyService = historyService;
 
-            FillCommandHistory();
+            _allProfiles = new Lazy<List<ShellProfile>>(() =>
+                SettingsService.GetSshProfiles().Union(SettingsService.GetShellProfiles()).ToList());
+
+            _allCommands = _historyService
+                .GetHistoryMostUsedFirst(true, profilesProvider: () => _allProfiles.Value.ToList())
+                .Select(c => new CommandItemViewModel(c)).ToList();
+
+            Commands = new ObservableCollection<CommandItemViewModel>(_allCommands);
 
             Initialize(Model);
         }
@@ -99,7 +147,7 @@ namespace FluentTerminal.App.ViewModels
 
         protected override async Task CopyToProfileAsync(ShellProfile profile)
         {
-            await base.CopyToProfileAsync(profile);
+            await base.CopyToProfileAsync(profile).ConfigureAwait(false);
 
             var command = _command?.Trim();
 
@@ -114,7 +162,8 @@ namespace FluentTerminal.App.ViewModels
             }
 
             var existingProfile =
-                _allProfiles.FirstOrDefault(p => string.Equals(p.Name, command, StringComparison.OrdinalIgnoreCase));
+                _allProfiles.Value.FirstOrDefault(p =>
+                    string.Equals(p.Name, command, StringComparison.OrdinalIgnoreCase));
 
             if (existingProfile != null)
             {
@@ -137,39 +186,28 @@ namespace FluentTerminal.App.ViewModels
                 return;
             }
 
-            var match = CommandValidationRx.Match(command);
-
-            if (!match.Success)
-            {
-                // Should not happen ever because this method gets called only if validation succeeds.
-                profile.Name = command;
-                profile.Location = null;
-                profile.Arguments = null;
-
-                return;
-            }
-
-            var cmd = match.Groups["cmd"].Value;
+            var cmd = ExtractCommandAndArgs(command, out var args);
 
             if (cmd.Equals(Constants.MoshCommandName, StringComparison.OrdinalIgnoreCase) ||
                 cmd.Equals($"{Constants.MoshCommandName}.exe", StringComparison.OrdinalIgnoreCase) ||
-                cmd.Contains(Path.PathSeparator))
+                cmd.Contains(Path.DirectorySeparatorChar))
             {
                 profile.Location = cmd;
             }
             else
             {
-                profile.Location = await _trayProcessCommunicationService.GetCommandPathAsync(cmd);
+                profile.Location =
+                    await _trayProcessCommunicationService.GetCommandPathAsync(cmd).ConfigureAwait(false);
             }
 
-            profile.Arguments = match.Groups["args"].Success ? match.Groups["args"].Value.Trim() : null;
+            profile.Arguments = args;
 
             profile.Name = command;
         }
 
         public override async Task<string> ValidateAsync()
         {
-            var error = await base.ValidateAsync();
+            var error = await base.ValidateAsync().ConfigureAwait(false);
 
             if (!string.IsNullOrEmpty(error))
             {
@@ -179,37 +217,27 @@ namespace FluentTerminal.App.ViewModels
             var command = _command?.Trim() ?? string.Empty;
 
             if (!string.IsNullOrEmpty(command) &&
-                _allProfiles.Any(p => string.Equals(p.Name, command, StringComparison.OrdinalIgnoreCase)))
+                _allProfiles.Value.Any(p => string.Equals(p.Name, command, StringComparison.OrdinalIgnoreCase)))
             {
                 // It's a saved profile
                 return null;
             }
 
-            var match = CommandValidationRx.Match(_command?.Trim() ?? string.Empty);
-
-            if (!match.Success)
-            {
-                return I18N.TranslateWithFallback("InvalidCommand", "Invalid command.");
-            }
-
-            command = match.Groups["cmd"].Value;
+            command = ExtractCommandAndArgs(command, out var args);
 
             if (command.Equals(Constants.MoshCommandName, StringComparison.OrdinalIgnoreCase) ||
                 command.Equals($"{Constants.MoshCommandName}.exe", StringComparison.OrdinalIgnoreCase) ||
                 command.Equals(Constants.SshCommandName, StringComparison.OrdinalIgnoreCase) ||
                 command.Equals($"{Constants.SshCommandName}.exe", StringComparison.OrdinalIgnoreCase))
             {
-                if (match.Groups["args"].Success)
-                {
-                    return null;
-                }
-
-                return I18N.TranslateWithFallback("CommandArgumentsMandatory", "Command arguments are missing.");
+                return string.IsNullOrEmpty(args)
+                    ? I18N.TranslateWithFallback("CommandArgumentsMandatory", "Command arguments are missing.")
+                    : null;
             }
 
-            if (command.Contains(Path.PathSeparator))
+            if (command.Contains(Path.DirectorySeparatorChar))
             {
-                if (await _trayProcessCommunicationService.CheckFileExistsAsync(command))
+                if (await _trayProcessCommunicationService.CheckFileExistsAsync(command).ConfigureAwait(false))
                 {
                     return null;
                 }
@@ -219,12 +247,12 @@ namespace FluentTerminal.App.ViewModels
 
             try
             {
-                await _trayProcessCommunicationService.GetCommandPathAsync(match.Groups["cmd"].Value);
+                await _trayProcessCommunicationService.GetCommandPathAsync(command).ConfigureAwait(false);
             }
             catch (Exception e)
             {
                 return
-                    $"{I18N.TranslateWithFallback("UnsupportedCommand", "Unsupported command:")} '{match.Groups["cmd"].Value}'. {e.Message}";
+                    $"{I18N.TranslateWithFallback("UnsupportedCommand", "Unsupported command:")} '{command}'. {e.Message}";
             }
 
             return null;
@@ -242,131 +270,6 @@ namespace FluentTerminal.App.ViewModels
             LoadFromProfile(Model);
         }
 
-        #endregion Methods
-
-        #region Command history
-
-        private const int CommandHistoryLimit = 50;
-
-        private static readonly DateTime NeverUsedTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-
-        private List<ShellProfile> _allProfiles;
-
-        private static string GetHash(string value)
-        {
-            if (string.IsNullOrEmpty(value))
-            {
-                return value;
-            }
-
-            value = value.ToLowerInvariant();
-
-            byte[] hashed;
-
-            using (var md5 = MD5.Create())
-            {
-                hashed = md5.ComputeHash(Encoding.UTF32.GetBytes(value));
-            }
-
-            var builder = new StringBuilder();
-
-            foreach (var b in hashed)
-            {
-                builder.Append(b.ToString("X2"));
-            }
-
-            return $"hist_{builder}_{value.Length:##########}";
-        }
-
-        private void FillCommandHistory()
-        {
-            List<ExecutedCommand> savedCommands = null;
-
-            bool validHistory;
-
-            try
-            {
-                savedCommands = _historyContainer.GetAll()
-                    .Select(c => JsonConvert.DeserializeObject<ExecutedCommand>((string) c)).ToList();
-
-                validHistory = savedCommands.All(c => !string.IsNullOrEmpty(c.Value));
-            }
-            catch
-            {
-                validHistory = false;
-            }
-
-            if (!validHistory)
-            {
-                // Invalid history - saved by previous dev version, so delete it
-                _historyContainer.Clear();
-
-                savedCommands = new List<ExecutedCommand>();
-            }
-
-            _allProfiles = SettingsService.GetShellProfiles().Union(SettingsService.GetSshProfiles())
-                .Where(p => !string.IsNullOrEmpty(p.Name)).ToList();
-
-            var counter = 0;
-
-            while (counter < savedCommands.Count)
-            {
-                var command = savedCommands[counter];
-
-                if (command.IsProfile)
-                {
-                    var profile = _allProfiles.FirstOrDefault(p =>
-                        string.Equals(p.Name, command.Value, StringComparison.OrdinalIgnoreCase));
-
-                    if (profile == null)
-                    {
-                        _historyContainer.Delete(GetHash(command.Value));
-
-                        savedCommands.RemoveAt(counter);
-
-                        counter--;
-                    }
-                    else
-                    {
-                        command.ShellProfile = profile;
-                    }
-                }
-
-                counter++;
-            }
-
-            if (savedCommands.Count > CommandHistoryLimit)
-            {
-                var toRemove = savedCommands.OrderBy(c => c.LastExecution)
-                    .Take(savedCommands.Count - CommandHistoryLimit).ToList();
-
-                foreach (var remove in toRemove)
-                {
-                    savedCommands.Remove(remove);
-
-                    _historyContainer.Delete(GetHash(remove.Value));
-                }
-            }
-
-            var unusedProfiles = _allProfiles.Where(p =>
-                !savedCommands.Any(c => string.Equals(p.Name, c.Value, StringComparison.OrdinalIgnoreCase))).ToList();
-
-            IEnumerable<ExecutedCommand> commands = savedCommands
-                .Union(unusedProfiles.Select(p => new ExecutedCommand
-                {
-                    Value = p.Name,
-                    ExecutionCount = 0,
-                    LastExecution = NeverUsedTime,
-                    IsProfile = true,
-                    ShellProfile = p
-                }));
-
-            _allCommands = commands.OrderByDescending(c => c.ExecutionCount).ThenByDescending(c => c.LastExecution)
-                .Select(c => new CommandItemViewModel(c)).ToList();
-
-            Commands = new ObservableCollection<CommandItemViewModel>(_allCommands);
-        }
-
         public void SetFilter(string filter)
         {
             filter = filter?.Trim().ToLowerInvariant() ?? string.Empty;
@@ -379,7 +282,8 @@ namespace FluentTerminal.App.ViewModels
                 {
                     _filterLoopRunning = true;
 
-                    var unused = FilteringLoop();
+                    // ReSharper disable once AssignmentIsFullyDiscarded
+                    _ = FilteringLoop();
                 }
             }
         }
@@ -412,7 +316,7 @@ namespace FluentTerminal.App.ViewModels
 
                 try
                 {
-                    await SetFilterAsync(filter, containsPrevious);
+                    await SetFilterAsync(filter, containsPrevious).ConfigureAwait(false);
                 }
                 catch
                 {
@@ -423,7 +327,7 @@ namespace FluentTerminal.App.ViewModels
 
         private Task SetFilterAsync(string filter, bool containsPrevious)
         {
-            var toCheck = containsPrevious ? (ICollection<CommandItemViewModel>) Commands : _allCommands;
+            var toCheck = containsPrevious ? (ICollection<CommandItemViewModel>)Commands : _allCommands;
 
             var words = filter.SplitWords().ToArray();
 
@@ -439,7 +343,7 @@ namespace FluentTerminal.App.ViewModels
                 }
             }
 
-            return ApplicationView.RunOnDispatcherThread(() => {
+            return ApplicationView.ExecuteOnUiThreadAsync(() => {
 
                 foreach (var command in toCheck)
                 {
@@ -468,69 +372,27 @@ namespace FluentTerminal.App.ViewModels
                         Commands.RemoveAt(index);
                     }
                 }
-            }, false);
-        }
-
-        public void SaveToHistory()
-        {
-            var key = GetHash(Model.Name);
-
-            var isProfile =
-                _allProfiles.Any(p => string.Equals(p.Name, Model.Name, StringComparison.OrdinalIgnoreCase));
-
-            ExecutedCommand command;
-
-            if (_historyContainer.TryGetValue(key, out var cmd))
-            {
-                if (cmd is string cmdStr)
-                {
-                    command = JsonConvert.DeserializeObject<ExecutedCommand>(cmdStr);
-                }
-                else if (cmd is ExecutedCommand executedCommand)
-                {
-                    command = executedCommand;
-                }
-                else
-                {
-                    throw new Exception("Unexpected history type: " + cmd.GetType());
-                }
-            }
-            else
-            {
-                command = new ExecutedCommand {ExecutionCount = 0};
-            }
-
-            command.Value = Model.Name;
-            command.ExecutionCount++;
-            command.LastExecution = DateTime.UtcNow;
-            command.ShellProfile = isProfile ? null : Model;
-            command.IsProfile = isProfile;
-
-            _historyContainer.WriteValueAsJson(key, command);
+            });
         }
 
         public void RemoveCommand(ExecutedCommand command)
         {
-            _historyContainer.Delete(GetHash(command.Value));
+            _historyService.Delete(command);
 
-            CommandItemViewModel toRemove = _allCommands.FirstOrDefault(c =>
+            var toRemove = _allCommands.FirstOrDefault(c =>
                 string.Equals(c.ExecutedCommand.Value, command.Value, StringComparison.Ordinal));
 
             if (toRemove != null)
             {
                 _allCommands.Remove(toRemove);
                 Commands.Remove(toRemove);
-
-                _historyContainer.Delete(GetHash(toRemove.ExecutedCommand.Value));
             }
         }
 
-        public bool IsProfileCommand(ExecutedCommand command)
-        {
-            return _allProfiles.Any(p => command.Value.NullableEqualTo(p.Name, StringComparison.OrdinalIgnoreCase));
-        }
+        public bool IsProfileCommand(ExecutedCommand command) => _allProfiles.Value.Any(p =>
+            command.Value.NullableEqualTo(p.Name, StringComparison.OrdinalIgnoreCase));
 
-        #endregion Command history
+        #endregion Methods
 
         #region Links/shortcuts related
 
@@ -542,10 +404,10 @@ namespace FluentTerminal.App.ViewModels
 
         public static CommandProfileProviderViewModel ParseUri(Uri uri, ISettingsService settingsService,
             IApplicationView applicationView, ITrayProcessCommunicationService trayProcessCommunicationService,
-            IApplicationDataContainer historyContainer)
+            ICommandHistoryService historyService)
         {
             var vm = new CommandProfileProviderViewModel(settingsService, applicationView,
-                trayProcessCommunicationService, historyContainer);
+                trayProcessCommunicationService, historyService);
 
             // ReSharper disable once ConstantConditionalAccessQualifier
             string queryString = uri.Query?.Trim();
@@ -579,7 +441,7 @@ namespace FluentTerminal.App.ViewModels
 
         public override async Task<Tuple<bool, string>> GetUrlAsync()
         {
-            var error = await ValidateAsync();
+            var error = await ValidateAsync().ConfigureAwait(false);
 
             if (!string.IsNullOrEmpty(error))
             {

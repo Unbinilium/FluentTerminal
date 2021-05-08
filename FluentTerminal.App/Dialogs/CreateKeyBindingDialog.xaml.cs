@@ -1,17 +1,19 @@
 ﻿using FluentTerminal.App.Services.Dialogs;
 using FluentTerminal.App.Services.Utilities;
 using FluentTerminal.Models;
-using GalaSoft.MvvmLight.Command;
+using Microsoft.Toolkit.Mvvm.Input;
 using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using System.Windows.Input;
 using Windows.System;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 
 namespace FluentTerminal.App.Dialogs
 {
+    // ReSharper disable once RedundantExtendsListEntry
     public sealed partial class CreateKeyBindingDialog : ContentDialog, ICreateKeyBindingDialog, INotifyPropertyChanged
     {
         private bool _ctrl;
@@ -23,31 +25,34 @@ namespace FluentTerminal.App.Dialogs
         public bool Ctrl
         {
             get => _ctrl;
-            set => Set(ref _ctrl, value);
+            set => SetProperty(ref _ctrl, value);
         }
 
         public bool Shift
         {
             get => _shift;
-            set => Set(ref _shift, value);
+            set => SetProperty(ref _shift, value);
         }
 
         public bool Alt
         {
             get => _alt;
-            set => Set(ref _alt, value);
+            set => SetProperty(ref _alt, value);
         }
 
         public bool Meta
         {
             get => _meta;
-            set => Set(ref _meta, value);
+            set => SetProperty(ref _meta, value);
         }
 
         public int Key
         {
             get => _key;
-            set => Set(ref _key, value);
+            set
+            {
+                SetProperty(ref _key, value);
+            }
         }
 
         public CreateKeyBindingDialog()
@@ -61,27 +66,17 @@ namespace FluentTerminal.App.Dialogs
             this.SecondaryButtonText = I18N.Translate("Cancel");
         }
 
-        public RelayCommand ResetCommand { get; }
+        public ICommand ResetCommand { get; }
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public async Task<KeyBinding> CreateKeyBinding()
+        public Task<KeyBinding> CreateKeyBinding()
         {
-            var result = await ShowAsync();
-
-            if (result == ContentDialogResult.Primary)
-            {
-                return new KeyBinding
-                {
-                    Alt = Alt,
-                    Ctrl = Ctrl,
-                    Key = Key,
-                    Meta = Meta,
-                    Shift = Shift
-                };
-            }
-
-            return null;
+            return ShowAsync().AsTask()
+                .ContinueWith(
+                    t => t.Result == ContentDialogResult.Primary
+                        ? new KeyBinding {Alt = Alt, Ctrl = Ctrl, Key = Key, Meta = Meta, Shift = Shift}
+                        : null, TaskContinuationOptions.OnlyOnRanToCompletion);
         }
 
         private void OnResetButtonPreviewKeyDown(object sender, Windows.UI.Xaml.Input.KeyRoutedEventArgs e)
@@ -130,8 +125,13 @@ namespace FluentTerminal.App.Dialogs
             ResetButton.Visibility = Visibility.Collapsed;
         }
 
-        private void Set<T>(ref T field, T value, [CallerMemberName]string propertyName = "")
+        private void SetProperty<T>(ref T field, T value, [CallerMemberName]string propertyName = "")
         {
+            if (field?.Equals(value) ?? value == null)
+            {
+                return;
+            }
+
             field = value;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }

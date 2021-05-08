@@ -2,13 +2,14 @@
 using FluentTerminal.App.Services.Utilities;
 using FluentTerminal.Models;
 using FluentTerminal.Models.Enums;
-using GalaSoft.MvvmLight;
-using GalaSoft.MvvmLight.Command;
+using Microsoft.Toolkit.Mvvm.ComponentModel;
+using Microsoft.Toolkit.Mvvm.Input;
 using System.Threading.Tasks;
+using System.Windows.Input;
 
 namespace FluentTerminal.App.ViewModels.Settings
 {
-    public class MousePageViewModel : ViewModelBase
+    public class MousePageViewModel : ObservableObject
     {
         private readonly ISettingsService _settingsService;
         private readonly IDialogService _dialogService;
@@ -22,7 +23,7 @@ namespace FluentTerminal.App.ViewModels.Settings
             _defaultValueProvider = defaultValueProvider;
             _applicationSettings = _settingsService.GetApplicationSettings();
 
-            RestoreDefaultsCommand = new RelayCommand(async () => await RestoreDefaults().ConfigureAwait(false));
+            RestoreDefaultsCommand = new AsyncRelayCommand(RestoreDefaultsAsync);
         }
 
         public bool CopyOnSelect
@@ -34,7 +35,7 @@ namespace FluentTerminal.App.ViewModels.Settings
                 {
                     _applicationSettings.CopyOnSelect = value;
                     _settingsService.SaveApplicationSettings(_applicationSettings);
-                    RaisePropertyChanged();
+                    OnPropertyChanged();
                 }
             }
         }
@@ -48,7 +49,7 @@ namespace FluentTerminal.App.ViewModels.Settings
                 {
                     _applicationSettings.MouseRightClickAction = value;
                     _settingsService.SaveApplicationSettings(_applicationSettings);
-                    RaisePropertyChanged();
+                    OnPropertyChanged();
                 }
             }
         }
@@ -71,6 +72,12 @@ namespace FluentTerminal.App.ViewModels.Settings
             set { if (value) MouseRightClickAction = MouseAction.Paste; }
         }
 
+        public bool MouseRightClickCopySelectionOrPasteIsSelected
+        {
+            get => MouseRightClickAction == MouseAction.CopySelectionOrPaste;
+            set { if (value) MouseRightClickAction = MouseAction.CopySelectionOrPaste; }
+        }
+
         public MouseAction MouseMiddleClickAction
         {
             get => _applicationSettings.MouseMiddleClickAction;
@@ -80,7 +87,7 @@ namespace FluentTerminal.App.ViewModels.Settings
                 {
                     _applicationSettings.MouseMiddleClickAction = value;
                     _settingsService.SaveApplicationSettings(_applicationSettings);
-                    RaisePropertyChanged();
+                    OnPropertyChanged();
                 }
             }
         }
@@ -103,11 +110,21 @@ namespace FluentTerminal.App.ViewModels.Settings
             set { if (value) MouseMiddleClickAction = MouseAction.Paste; }
         }
 
-        public RelayCommand RestoreDefaultsCommand { get; }
-
-        private async Task RestoreDefaults()
+        public bool MouseMiddleClickCopySelectionOrPasteIsSelected
         {
-            var result = await _dialogService.ShowMessageDialogAsnyc(I18N.Translate("PleaseConfirm"), I18N.Translate("ConfirmRestoreMouseSettings"), DialogButton.OK, DialogButton.Cancel).ConfigureAwait(true);
+            get => MouseMiddleClickAction == MouseAction.CopySelectionOrPaste;
+            set { if (value) MouseMiddleClickAction = MouseAction.CopySelectionOrPaste; }
+        }
+
+        public ICommand RestoreDefaultsCommand { get; }
+
+        // Requires UI thread
+        private async Task RestoreDefaultsAsync()
+        {
+            // ConfigureAwait(true) because we're setting some view-model properties afterwards.
+            var result = await _dialogService.ShowMessageDialogAsync(I18N.Translate("PleaseConfirm"),
+                    I18N.Translate("ConfirmRestoreMouseSettings"), DialogButton.OK, DialogButton.Cancel)
+                .ConfigureAwait(true);
 
             if (result == DialogButton.OK)
             {

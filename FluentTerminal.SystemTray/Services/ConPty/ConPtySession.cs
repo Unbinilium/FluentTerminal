@@ -10,9 +10,9 @@ namespace FluentTerminal.SystemTray.Services.ConPty
     {
         private TerminalsManager _terminalsManager;
         private Terminal _terminal;
-        private bool _exited;
-        private bool _paused;
-        private TerminalSize _terminalSize;
+
+        private BufferedReader _reader;
+        private bool _enableBuffer;
 
         public byte Id { get; private set; }
 
@@ -22,43 +22,44 @@ namespace FluentTerminal.SystemTray.Services.ConPty
 
         public void Close()
         {
+            _reader?.Dispose();
+
             ConnectionClosed?.Invoke(this, _terminal.ExitCode);
         }
 
         public void Resize(TerminalSize size)
         {
             _terminal?.Resize(size.Columns, size.Rows);
-            _terminalSize = size;
         }
 
         public void Start(CreateTerminalRequest request, TerminalsManager terminalsManager)
         {
+            _enableBuffer = false; // request.Profile.UseBuffer;
+
+            _reader?.Dispose();
+            _reader = null;
+
             Id = request.Id;
             _terminalsManager = terminalsManager;
-            _terminalSize = request.Size;
 
             ShellExecutableName = Path.GetFileNameWithoutExtension(request.Profile.Location);
             var cwd = GetWorkingDirectory(request.Profile);
 
-            var args = string.Empty;
-            if (!string.IsNullOrWhiteSpace(request.Profile.Location))
-            {
-                args = $"\"{request.Profile.Location}\" {request.Profile.Arguments}";
-            }
-            else
-            {
-                args = request.Profile.Arguments;
-            }
+            var args = !string.IsNullOrWhiteSpace(request.Profile.Location)
+                ? $"\"{request.Profile.Location}\" {request.Profile.Arguments}"
+                : request.Profile.Arguments;
 
             _terminal = new Terminal();
             _terminal.OutputReady += _terminal_OutputReady;
             _terminal.Exited += _terminal_Exited;
-            Task.Run(() => _terminal.Start(args, cwd, terminalsManager.GetDefaultEnvironmentVariableString(request.Profile.EnvironmentVariables), request.Size.Columns, request.Size.Rows));
+
+            Task.Factory.StartNew(() => _terminal.Start(args, cwd,
+                terminalsManager.GetDefaultEnvironmentVariableString(request.Profile.EnvironmentVariables),
+                request.Size.Columns, request.Size.Rows));
         }
 
         private void _terminal_Exited(object sender, EventArgs e)
         {
-            _exited = true;
             Close();
         }
 
@@ -73,35 +74,11 @@ namespace FluentTerminal.SystemTray.Services.ConPty
 
         private void _terminal_OutputReady(object sender, EventArgs e)
         {
-            ListenToStdOut();
-        }
-
-        private void ListenToStdOut()
-        {
-            Task.Factory.StartNew(async () =>
+            if (_reader == null)
             {
-                using (var reader = new StreamReader(_terminal.ConsoleOutStream))
-                {
-                    do
-                    {
-                        var buffer = new byte[Math.Max(1024, _terminalSize.Columns * _terminalSize.Rows * 4)];
-                        var readBytes = await _terminal.ConsoleOutStream.ReadAsync(buffer, 0, buffer.Length).ConfigureAwait(false);
-                        var read = new byte[readBytes];
-                        Buffer.BlockCopy(buffer, 0, read, 0, readBytes);
-
-                        if (readBytes > 0)
-                        {
-                            _terminalsManager.DisplayTerminalOutput(Id, read);
-                        }
-
-                        while(_paused && !_exited)
-                        {
-                            await Task.Delay(50);
-                        }
-                    }
-                    while (!_exited);
-                }
-            }, TaskCreationOptions.LongRunning);
+                _reader = new BufferedReader(_terminal.ConsoleOutStream,
+                    bytes => _terminalsManager.DisplayTerminalOutput(Id, bytes), _enableBuffer);
+            }
         }
 
         public void Write(byte[] data)
@@ -111,29 +88,37 @@ namespace FluentTerminal.SystemTray.Services.ConPty
 
         public void Pause(bool value)
         {
-            _paused = value;
+            _reader?.SetPaused(value);
+        }
+
+        ~ConPtySession()
+        {
+            Dispose(false);
         }
 
         #region IDisposable Support
 
-        private bool disposedValue = false;
+        private bool _disposed;
 
         private void Dispose(bool disposing)
         {
-            if (!disposedValue)
+            if (!_disposed)
             {
                 if (disposing)
                 {
                     _terminal?.Dispose();
                 }
 
-                disposedValue = true;
+                _disposed = true;
+
+                _reader?.Dispose();
             }
         }
 
         public void Dispose()
         {
             _terminal.Exited -= _terminal_Exited;
+            _terminal.OutputReady -= _terminal_OutputReady;
             Dispose(true);
         }
 

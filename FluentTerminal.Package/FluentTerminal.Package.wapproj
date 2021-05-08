@@ -56,7 +56,7 @@
   <PropertyGroup>
     <ProjectGuid>da0bf206-f386-404c-82df-5eae2f5b1aa5</ProjectGuid>
     <TargetPlatformVersion>10.0.18362.0</TargetPlatformVersion>
-    <TargetPlatformMinVersion>10.0.16299.0</TargetPlatformMinVersion>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <DefaultLanguage>en-US</DefaultLanguage>
     <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
     <PackageCertificateKeyFile>FluentTerminal.App_StoreKey.pfx</PackageCertificateKeyFile>
@@ -67,47 +67,46 @@
     <AppxBundlePlatforms>x86|x64</AppxBundlePlatforms>
     <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
     <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
-    <PackageCertificateThumbprint>8A5DE5B20B663BD6A99B44C5BA278289521F419F</PackageCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <AppxBundle>Always</AppxBundle>
-    <DefaultLanguage>en</DefaultLanguage>
+    <DefaultLanguage>en-US</DefaultLanguage>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
     <AppxBundle>Always</AppxBundle>
-    <DefaultLanguage>en</DefaultLanguage>
+    <DefaultLanguage>en-US</DefaultLanguage>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <AppxBundle>Always</AppxBundle>
-    <DefaultLanguage>en</DefaultLanguage>
+    <DefaultLanguage>en-US</DefaultLanguage>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <AppxBundle>Always</AppxBundle>
-    <DefaultLanguage>en</DefaultLanguage>
+    <DefaultLanguage>en-US</DefaultLanguage>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <AppxBundle>Always</AppxBundle>
-    <DefaultLanguage>en</DefaultLanguage>
+    <DefaultLanguage>en-US</DefaultLanguage>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
     <AppxBundle>Always</AppxBundle>
-    <DefaultLanguage>en</DefaultLanguage>
+    <DefaultLanguage>en-US</DefaultLanguage>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <AppxBundle>Always</AppxBundle>
-    <DefaultLanguage>en</DefaultLanguage>
+    <DefaultLanguage>en-US</DefaultLanguage>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <AppxBundle>Always</AppxBundle>
-    <DefaultLanguage>en</DefaultLanguage>
+    <DefaultLanguage>en-US</DefaultLanguage>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
     <AppxBundle>Always</AppxBundle>
-    <DefaultLanguage>en</DefaultLanguage>
+    <DefaultLanguage>en-US</DefaultLanguage>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
     <AppxBundle>Always</AppxBundle>
-    <DefaultLanguage>en</DefaultLanguage>
+    <DefaultLanguage>en-US</DefaultLanguage>
   </PropertyGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">
@@ -118,65 +117,35 @@
     <Content Include="FluentTerminal.App_StoreKey.pfx" />
     <Content Include="Images\AppIcons\Full-transparent.png" />
     <Content Include="Images\AppIcons\LargeTile.scale-100.png" />
-    <Content Include="Images\AppIcons\LargeTile.scale-100_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\LargeTile.scale-125.png" />
-    <Content Include="Images\AppIcons\LargeTile.scale-125_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\LargeTile.scale-150.png" />
-    <Content Include="Images\AppIcons\LargeTile.scale-150_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\LargeTile.scale-200.png" />
-    <Content Include="Images\AppIcons\LargeTile.scale-200_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\LargeTile.scale-400.png" />
-    <Content Include="Images\AppIcons\LargeTile.scale-400_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\SmallTile.scale-100.png" />
-    <Content Include="Images\AppIcons\SmallTile.scale-100_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\SmallTile.scale-125.png" />
-    <Content Include="Images\AppIcons\SmallTile.scale-125_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\SmallTile.scale-150.png" />
-    <Content Include="Images\AppIcons\SmallTile.scale-150_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\SmallTile.scale-200.png" />
-    <Content Include="Images\AppIcons\SmallTile.scale-200_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\SmallTile.scale-400.png" />
-    <Content Include="Images\AppIcons\SmallTile.scale-400_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\SplashScreen.scale-100.png" />
-    <Content Include="Images\AppIcons\SplashScreen.scale-100_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\SplashScreen.scale-125.png" />
-    <Content Include="Images\AppIcons\SplashScreen.scale-125_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\SplashScreen.scale-150.png" />
-    <Content Include="Images\AppIcons\SplashScreen.scale-150_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\SplashScreen.scale-200.png" />
-    <Content Include="Images\AppIcons\SplashScreen.scale-200_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\SplashScreen.scale-400.png" />
-    <Content Include="Images\AppIcons\SplashScreen.scale-400_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\Square150x150Logo.scale-100.png" />
-    <Content Include="Images\AppIcons\Square150x150Logo.scale-100_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\Square150x150Logo.scale-125.png" />
-    <Content Include="Images\AppIcons\Square150x150Logo.scale-125_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\Square150x150Logo.scale-150.png" />
-    <Content Include="Images\AppIcons\Square150x150Logo.scale-150_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\Square150x150Logo.scale-200.png" />
-    <Content Include="Images\AppIcons\Square150x150Logo.scale-200_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\Square150x150Logo.scale-400.png" />
-    <Content Include="Images\AppIcons\Square150x150Logo.scale-400_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\Square44x44Logo.altform-unplated_targetsize-16.png" />
-    <Content Include="Images\AppIcons\Square44x44Logo.altform-unplated_targetsize-16_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\Square44x44Logo.altform-unplated_targetsize-24.png" />
-    <Content Include="Images\AppIcons\Square44x44Logo.altform-unplated_targetsize-24_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\Square44x44Logo.altform-unplated_targetsize-256.png" />
-    <Content Include="Images\AppIcons\Square44x44Logo.altform-unplated_targetsize-256_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\Square44x44Logo.altform-unplated_targetsize-32.png" />
-    <Content Include="Images\AppIcons\Square44x44Logo.altform-unplated_targetsize-32_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\Square44x44Logo.altform-unplated_targetsize-48.png" />
-    <Content Include="Images\AppIcons\Square44x44Logo.altform-unplated_targetsize-48_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\Square44x44Logo.scale-100.png" />
-    <Content Include="Images\AppIcons\Square44x44Logo.scale-100_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\Square44x44Logo.scale-125.png" />
-    <Content Include="Images\AppIcons\Square44x44Logo.scale-125_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\Square44x44Logo.scale-150.png" />
-    <Content Include="Images\AppIcons\Square44x44Logo.scale-150_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\Square44x44Logo.scale-200.png" />
-    <Content Include="Images\AppIcons\Square44x44Logo.scale-200_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\Square44x44Logo.scale-400.png" />
-    <Content Include="Images\AppIcons\Square44x44Logo.scale-400_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\Square44x44Logo.targetsize-16.png" />
     <Content Include="Images\AppIcons\Square44x44Logo.targetsize-16_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\Square44x44Logo.targetsize-24.png" />
@@ -188,25 +157,15 @@
     <Content Include="Images\AppIcons\Square44x44Logo.targetsize-48.png" />
     <Content Include="Images\AppIcons\Square44x44Logo.targetsize-48_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\StoreLogo.scale-100.png" />
-    <Content Include="Images\AppIcons\StoreLogo.scale-100_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\StoreLogo.scale-125.png" />
-    <Content Include="Images\AppIcons\StoreLogo.scale-125_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\StoreLogo.scale-150.png" />
-    <Content Include="Images\AppIcons\StoreLogo.scale-150_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\StoreLogo.scale-200.png" />
-    <Content Include="Images\AppIcons\StoreLogo.scale-200_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\StoreLogo.scale-400.png" />
-    <Content Include="Images\AppIcons\StoreLogo.scale-400_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\Wide310x150Logo.scale-100.png" />
-    <Content Include="Images\AppIcons\Wide310x150Logo.scale-100_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\Wide310x150Logo.scale-125.png" />
-    <Content Include="Images\AppIcons\Wide310x150Logo.scale-125_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\Wide310x150Logo.scale-150.png" />
-    <Content Include="Images\AppIcons\Wide310x150Logo.scale-150_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\Wide310x150Logo.scale-200.png" />
-    <Content Include="Images\AppIcons\Wide310x150Logo.scale-200_altform-lightunplated.png" />
     <Content Include="Images\AppIcons\Wide310x150Logo.scale-400.png" />
-    <Content Include="Images\AppIcons\Wide310x150Logo.scale-400_altform-lightunplated.png" />
     <None Include="Package.StoreAssociation.xml" />
     <None Include="priconfig.default.xml" />
     <None Include="priconfig.packaging.xml" />

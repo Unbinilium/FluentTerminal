@@ -119,8 +119,7 @@
   </resheader>
   <data name="AboutDialog.Title" xml:space="preserve">
     <value>О программе</value>
-    <comment>MainPage.xaml
-Fuzzy</comment>
+    <comment>MainPage.xaml</comment>
   </data>
   <data name="Background.Content" xml:space="preserve">
     <value>Фон</value>
@@ -132,12 +131,12 @@ Fuzzy</comment>
   </data>
   <data name="Close" xml:space="preserve">
     <value>Закрыть</value>
-    <comment>TabBar.xaml
-Fuzzy</comment>
+    <comment>TabBar.xaml</comment>
   </data>
   <data name="ConfirmWindowClosing.Header" xml:space="preserve">
     <value>Подтверждать закрытие окон</value>
-    <comment>GeneralSettings.xaml</comment>
+    <comment>GeneralSettings.xaml
+Fuzzy</comment>
   </data>
   <data name="ConfirmTabClosing.Header" xml:space="preserve">
     <value>Подтверждать закрытие вкладок</value>
@@ -149,19 +148,22 @@ Fuzzy</comment>
   </data>
   <data name="ColorInactiveTabs.Text" xml:space="preserve">
     <value>Цвет неактивных вкладок</value>
-    <comment>GeneralSettings.xaml</comment>
+    <comment>GeneralSettings.xaml
+Fuzzy</comment>
   </data>
   <data name="Command.Copy" xml:space="preserve">
     <value>Копировать</value>
     <comment>XtermTerminalView.xaml.cs</comment>
   </data>
   <data name="CustomTitle.Header" xml:space="preserve">
-    <value>Show custom tab title also in titlebar</value>
-    <comment>GeneralSettings.xaml</comment>
+    <value>Отображать пользовательский заголовок</value>
+    <comment>GeneralSettings.xaml
+Fuzzy</comment>
   </data>
   <data name="EditTitle.Text" xml:space="preserve">
     <value>Изменить название</value>
-    <comment>TabBar.xaml</comment>
+    <comment>TabBar.xaml
+Fuzzy</comment>
   </data>
   <data name="General.Text" xml:space="preserve">
     <value>Основное</value>
@@ -172,19 +174,20 @@ Fuzzy</comment>
     <comment>TabBar.xaml</comment>
   </data>
   <data name="IndicatorOutput.Header" xml:space="preserve">
-    <value>Show new output indicator on background tabs</value>
+    <value>Отображать активность на фоновых вкладках</value>
     <comment>GeneralSettings.xaml</comment>
   </data>
   <data name="NeedRelaunch.Text" xml:space="preserve">
     <value>Требуется перезапуск</value>
-    <comment>GeneralSettings.xaml</comment>
+    <comment>GeneralSettings.xaml
+Fuzzy</comment>
   </data>
   <data name="NewTab.Text" xml:space="preserve">
     <value>Новая вкладка</value>
     <comment>MainPage.xaml</comment>
   </data>
   <data name="TabTheme.None" xml:space="preserve">
-    <value>Ничего</value>
+    <value>Нет</value>
     <comment>TabBar.xaml</comment>
   </data>
   <data name="ONTA_Tabs.Content" xml:space="preserve">
@@ -193,7 +196,8 @@ Fuzzy</comment>
   </data>
   <data name="ONTA_Windows.Content" xml:space="preserve">
     <value>Окна</value>
-    <comment>GeneralSettings.xaml</comment>
+    <comment>GeneralSettings.xaml
+Fuzzy</comment>
   </data>
   <data name="OpenNewTerminalAs.Text" xml:space="preserve">
     <value>Открывать новые терминалы как</value>
@@ -225,7 +229,8 @@ Fuzzy</comment>
   </data>
   <data name="Setting" xml:space="preserve">
     <value>Настройки</value>
-    <comment>SettingsPage.xaml.cs</comment>
+    <comment>SettingsPage.xaml.cs
+Fuzzy</comment>
   </data>
   <data name="Settings.Text" xml:space="preserve">
     <value>Настройки</value>
@@ -364,7 +369,7 @@ Fuzzy</comment>
     <comment>TerminalSettings.xaml</comment>
   </data>
   <data name="DeleteAppBarButton.Label" xml:space="preserve">
-    <value>Удали</value>
+    <value>Удалить</value>
     <comment>ShellProfileSettings.xaml</comment>
   </data>
   <data name="LineEndingStyle.DoNotModify" xml:space="preserve">
@@ -385,15 +390,18 @@ Fuzzy</comment>
   </data>
   <data name="FontSize.Header" xml:space="preserve">
     <value>Размер шрифта</value>
-    <comment>TerminalSettings.xaml</comment>
+    <comment>TerminalSettings.xaml
+Fuzzy</comment>
   </data>
   <data name="ImportTheme.Text" xml:space="preserve">
     <value>Импорт</value>
-    <comment>ThemeSettings.xaml</comment>
+    <comment>ThemeSettings.xaml
+Fuzzy</comment>
   </data>
   <data name="KeyboardShortcut.Header" xml:space="preserve">
     <value>Горячая клавиша</value>
-    <comment>ShellProfileSettings.xaml</comment>
+    <comment>ShellProfileSettings.xaml
+Fuzzy</comment>
   </data>
   <data name="KeyboardShortcut1.Text" xml:space="preserve">
     <value>Горячая клавиша</value>
@@ -417,7 +425,8 @@ Fuzzy</comment>
   </data>
   <data name="MiddleButtonAction.Text" xml:space="preserve">
     <value>Действие на среднюю кнопку</value>
-    <comment>MouseSettings.xaml</comment>
+    <comment>MouseSettings.xaml
+Fuzzy</comment>
   </data>
   <data name="Mouse.Text" xml:space="preserve">
     <value>Мышь</value>
@@ -441,10 +450,11 @@ Fuzzy</comment>
   </data>
   <data name="Padding.Header" xml:space="preserve">
     <value>Отступ</value>
-    <comment>TerminalSettings.xaml</comment>
+    <comment>TerminalSettings.xaml
+Fuzzy</comment>
   </data>
   <data name="ProfileName.Header" xml:space="preserve">
-    <value>Назване</value>
+    <value>Название</value>
     <comment>ShellProfileSettings.xaml</comment>
   </data>
   <data name="Profiles.Text" xml:space="preserve">
@@ -453,7 +463,8 @@ Fuzzy</comment>
   </data>
   <data name="ProfileTheme.Header" xml:space="preserve">
     <value>Тема</value>
-    <comment>ShellProfileSettings.xaml</comment>
+    <comment>ShellProfileSettings.xaml
+Fuzzy</comment>
   </data>
   <data name="ReleaseNotes.Text" xml:space="preserve">
     <value>Примечания к выпуску</value>
@@ -469,7 +480,8 @@ Fuzzy</comment>
   </data>
   <data name="ScrollbackLimit.Header" xml:space="preserve">
     <value>Лимит истории скрола</value>
-    <comment>TerminalSettings.xaml</comment>
+    <comment>TerminalSettings.xaml
+Fuzzy</comment>
   </data>
   <data name="ScrollBarAuto.Content" xml:space="preserve">
     <value>Авто-скрытие</value>
@@ -481,7 +493,8 @@ Fuzzy</comment>
   </data>
   <data name="ScrollbarStyle.Text" xml:space="preserve">
     <value>Стиль скролла</value>
-    <comment>TerminalSettings.xaml</comment>
+    <comment>TerminalSettings.xaml
+Fuzzy</comment>
   </data>
   <data name="ScrollBarVisible.Content" xml:space="preserve">
     <value>Видимый</value>
@@ -533,59 +546,73 @@ Fuzzy</comment>
   </data>
   <data name="WorkingDir.Header" xml:space="preserve">
     <value>Рабочая директория</value>
-    <comment>ShellProfileSettings.xaml</comment>
+    <comment>ShellProfileSettings.xaml
+Fuzzy</comment>
   </data>
   <data name="ConfirmCloseTab" xml:space="preserve">
     <value>Вы действительно хотите закрыть вкладку &quot;{0}&quot;?</value>
-    <comment>ViewModel</comment>
+    <comment>ViewModel
+Fuzzy</comment>
   </data>
   <data name="ConfirmCloseWindow" xml:space="preserve">
     <value>Вы действительно хотите закрыть окно?</value>
-    <comment>ViewModel</comment>
+    <comment>ViewModel
+Fuzzy</comment>
   </data>
   <data name="ConfirmDeleteKeybindings" xml:space="preserve">
-    <value>Вы действительно хотите удалить горячую клавишу?</value>
-    <comment>ViewModel</comment>
+    <value>Вы действительно хотите удалить эту горячую клавишу?</value>
+    <comment>ViewModel
+Fuzzy</comment>
   </data>
   <data name="ConfirmDeleteTheme" xml:space="preserve">
-    <value>Вы действительно хотите удалить тему?</value>
-    <comment>ViewModel</comment>
+    <value>Вы действительно хотите удалить эту тему?</value>
+    <comment>ViewModel
+Fuzzy</comment>
   </data>
   <data name="ConfirmDiscardChanges" xml:space="preserve">
     <value>Вы действительно хотите отменить все изменения?</value>
-    <comment>ViewModel</comment>
+    <comment>ViewModel
+Fuzzy</comment>
   </data>
   <data name="ConfirmRestoreGeneralSettings" xml:space="preserve">
     <value>Вы действительно хотите восстановить основные?</value>
-    <comment>ViewModel</comment>
+    <comment>ViewModel
+Fuzzy</comment>
   </data>
   <data name="ConfirmRestoreKeybindings" xml:space="preserve">
     <value>Вы действительно хотите восстановить горячие клавиши по умолчанию?</value>
-    <comment>ViewModel</comment>
+    <comment>ViewModel
+Fuzzy</comment>
   </data>
   <data name="ConfirmRestoreMouseSettings" xml:space="preserve">
     <value>Вы действительно хотите восстановить настройки мыши?</value>
-    <comment>ViewModel</comment>
+    <comment>ViewModel
+Fuzzy</comment>
   </data>
   <data name="ConfirmRestoreProfile" xml:space="preserve">
     <value>Вы действительно хотите восстановить этот профиль?</value>
-    <comment>ViewModel</comment>
+    <comment>ViewModel
+Fuzzy</comment>
   </data>
   <data name="ConfirmRestoreTerminalOptions" xml:space="preserve">
     <value>Вы действительно хотите восстановить настройки терминала по умолчанию?</value>
-    <comment>ViewModel</comment>
+    <comment>ViewModel
+Fuzzy</comment>
   </data>
   <data name="DisabledByPolicy" xml:space="preserve">
     <value>Отключено политикой.</value>
-    <comment>ViewModel</comment>
+    <comment>ViewModel
+Fuzzy</comment>
   </data>
   <data name="DisabledByUser" xml:space="preserve">
     <value>Отключено пользователем. Включите во вкладке Автозагрузка в Диспетчере задач</value>
-    <comment>ViewModel</comment>
+    <comment>ViewModel
+Fuzzy</comment>
   </data>
   <data name="EditTitleString" xml:space="preserve">
     <value>Изменить заголовок</value>
-    <comment>ViewModel</comment>
+    <comment>ViewModel
+Fuzzy</comment>
   </data>
   <data name="Error" xml:space="preserve">
     <value>Ошибка</value>
@@ -593,11 +620,13 @@ Fuzzy</comment>
   </data>
   <data name="ErrorString1" xml:space="preserve">
     <value>Операция не может быть завершена из-за следующей ошибки:</value>
-    <comment>ViewModel</comment>
+    <comment>ViewModel
+Fuzzy</comment>
   </data>
   <data name="ImportThemeFailed" xml:space="preserve">
     <value>Импорт темы завершился ошибкой</value>
-    <comment>ViewModel</comment>
+    <comment>ViewModel
+Fuzzy</comment>
   </data>
   <data name="NoSuitableParserFound" xml:space="preserve">
     <value>Не найдено подходящего парсера</value>
@@ -612,9 +641,11 @@ Fuzzy</comment>
   </data>
   <data name="KeybindingDialogTitle.Text" xml:space="preserve">
     <value>Введите вашу горячую клавишу</value>
+    <comment>Fuzzy</comment>
   </data>
   <data name="OK" xml:space="preserve">
     <value>OK</value>
+    <comment>Fuzzy</comment>
   </data>
   <data name="ResetBtn.Content" xml:space="preserve">
     <value>Сбросить</value>
@@ -629,7 +660,8 @@ Fuzzy</comment>
   </data>
   <data name="Command.ChangeTabTitle" xml:space="preserve">
     <value>Изменить заголовок вкладки</value>
-    <comment>Command</comment>
+    <comment>Command
+Fuzzy</comment>
   </data>
   <data name="Command.Clear" xml:space="preserve">
     <value>Очистить</value>
@@ -639,17 +671,10 @@ Fuzzy</comment>
     <value>Закрыть вкладку</value>
     <comment>Command</comment>
   </data>
-  <data name="Command.ConfigurableNewTab" xml:space="preserve">
-    <value>Настраиваемая новая вкладка</value>
-    <comment>Command</comment>
-  </data>
-  <data name="Command.ConfigurableNewWindow" xml:space="preserve">
-    <value>Настраиваемое новое окно</value>
-    <comment>Command</comment>
-  </data>
   <data name="Keybindings.Text" xml:space="preserve">
     <value>Горячие клавиши</value>
-    <comment>KeyBindingSettings.xaml</comment>
+    <comment>KeyBindingSettings.xaml
+Fuzzy</comment>
   </data>
   <data name="Delete.Content" xml:space="preserve">
     <value>Удалить</value>
@@ -665,7 +690,8 @@ Fuzzy</comment>
   </data>
   <data name="Command.NewWindow" xml:space="preserve">
     <value>Новое окно</value>
-    <comment>Command</comment>
+    <comment>Command
+Fuzzy</comment>
   </data>
   <data name="Command.NextTab" xml:space="preserve">
     <value>Следующая вкладка</value>
@@ -687,17 +713,10 @@ Fuzzy</comment>
     <value>Выделить всё</value>
     <comment>Command</comment>
   </data>
-  <data name="SelectProfileUI.PrimaryButtonText" xml:space="preserve">
-    <value>Старт</value>
-    <comment>ShellProfileSelectionDialog.xaml</comment>
-  </data>
-  <data name="SelectProfileUI.Title" xml:space="preserve">
-    <value>Выбрать профиль</value>
-    <comment>ShellProfileSelectionDialog.xaml</comment>
-  </data>
   <data name="Command.ShowSettings" xml:space="preserve">
     <value>Показать настройки</value>
-    <comment>Command</comment>
+    <comment>Command
+Fuzzy</comment>
   </data>
   <data name="Command.SwitchToTerm1" xml:space="preserve">
     <value>Переключить на терминал 1</value>
@@ -737,14 +756,17 @@ Fuzzy</comment>
   </data>
   <data name="Command.ToggleFullScreen" xml:space="preserve">
     <value>Переключить во весь экран</value>
-    <comment>Command</comment>
+    <comment>Command
+Fuzzy</comment>
   </data>
   <data name="Command.ToggleWindow" xml:space="preserve">
     <value>Переключить окно</value>
-    <comment>Command</comment>
+    <comment>Command
+Fuzzy</comment>
   </data>
   <data name="NewSshTab.Text" xml:space="preserve">
     <value>Новая удалённая вкладка</value>
+    <comment>Fuzzy</comment>
   </data>
   <data name="Command.NewSshTab" xml:space="preserve">
     <value>Новая SSH вкладка</value>
@@ -760,6 +782,7 @@ Fuzzy</comment>
   </data>
   <data name="PortTextBox.PlaceholderText" xml:space="preserve">
     <value>порт</value>
+    <comment>Fuzzy</comment>
   </data>
   <data name="IdentityFileTextBox.PlaceholderText" xml:space="preserve">
     <value>Путь к файлу идентификации</value>
@@ -772,24 +795,28 @@ Fuzzy</comment>
   </data>
   <data name="AdvancedExpander.Header" xml:space="preserve">
     <value>Дополнительно</value>
+    <comment>Fuzzy</comment>
   </data>
   <data name="MoshPorts.Text" xml:space="preserve">
     <value>Порты Mosh:</value>
   </data>
   <data name="SaveShortcutButton.Content" xml:space="preserve">
     <value>Сохранить быструю клавишу</value>
+    <comment>Fuzzy</comment>
   </data>
   <data name="NeedsToRestart.Text" xml:space="preserve">
     <value>Требуется перезапуск для применения изменений.</value>
   </data>
   <data name="InvalidInput" xml:space="preserve">
     <value>Неверный ввод</value>
+    <comment>Fuzzy</comment>
   </data>
   <data name="PortCannotBeZero" xml:space="preserve">
     <value>Порт не может быть 0.</value>
   </data>
   <data name="UserAndHostMandatory" xml:space="preserve">
-    <value>Пользователь и хост обязательные поля</value>
+    <value>Пользователь и хост обязательные поля.</value>
+    <comment>Fuzzy</comment>
   </data>
   <data name="SshConnectionInfoValidationResult.UsernameEmpty" xml:space="preserve">
     <value>Пользователь не может быть пустым.</value>
@@ -799,12 +826,13 @@ Fuzzy</comment>
   </data>
   <data name="SshConnectionInfoValidationResult.SshPortZeroOrNegative" xml:space="preserve">
     <value>Порт SSH должен быть больше нуля.</value>
+    <comment>Fuzzy</comment>
   </data>
   <data name="SshConnectionInfoValidationResult.MoshPortZeroOrNegative" xml:space="preserve">
     <value>Порт Mosh не может быть равен нулю.</value>
   </data>
   <data name="SshConnectionInfoValidationResult.MoshPortRangeInvalid" xml:space="preserve">
-    <value>Диапозон портов Mosh недействителен.</value>
+    <value>Диапазон Mosh портов недействителен.</value>
   </data>
   <data name="Yes.Text" xml:space="preserve">
     <value>Да</value>
@@ -820,21 +848,18 @@ Fuzzy</comment>
   </data>
   <data name="NewOutput.ToolTipService.ToolTip" xml:space="preserve">
     <value>Новый вывод</value>
+    <comment>Fuzzy</comment>
   </data>
   <data name="ExitedWithError.ToolTipService.ToolTip" xml:space="preserve">
     <value>Завершилось с ошибкой</value>
   </data>
   <data name="ConfirmDeleteProfile" xml:space="preserve">
     <value>Вы действительно хотите удалить этот профиль?</value>
+    <comment>Fuzzy</comment>
   </data>
   <data name="Command.NewSshWindow" xml:space="preserve">
     <value>Новое SSH окно</value>
-  </data>
-  <data name="Command.SavedSshNewTab" xml:space="preserve">
-    <value>Новая вкладка для SSH профиля</value>
-  </data>
-  <data name="Command.SavedSshNewWindow" xml:space="preserve">
-    <value>Новое окно для SSH профиля</value>
+    <comment>Fuzzy</comment>
   </data>
   <data name="Setting_SShProfiles.Content" xml:space="preserve">
     <value>SSH профили</value>
@@ -849,28 +874,30 @@ Fuzzy</comment>
     <value>Пользователь</value>
   </data>
   <data name="MoshPortFrom.Header" xml:space="preserve">
-    <value>C порта</value>
+    <value>От порта</value>
   </data>
   <data name="MoshPortTo.Header" xml:space="preserve">
     <value>До порта</value>
   </data>
   <data name="MoshPortRange.Text" xml:space="preserve">
-    <value>Диапозон Mosh портов</value>
+    <value>Диапазон Mosh портов</value>
   </data>
   <data name="Authenticate" xml:space="preserve">
     <value>Аутентификация</value>
   </data>
   <data name="SettingsExported" xml:space="preserve">
-    <value>Настройки сохранены в файл</value>
+    <value>Настройки экспортированы в файл</value>
   </data>
   <data name="SettingsImported" xml:space="preserve">
     <value>Настройки импортированы из файла</value>
+    <comment>Fuzzy</comment>
   </data>
   <data name="SshConnectionInfoValidationResult.IdentityFileDoesNotExist" xml:space="preserve">
     <value>Файл идентификации не существует</value>
+    <comment>Fuzzy</comment>
   </data>
   <data name="AutoFallbackToWindowsUsername.Header" xml:space="preserve">
-    <value>Use Windows username when opening SSH URLs that don&apos;t specify one</value>
+    <value>Использовать имя пользователя Windows в SSH если не указано иное</value>
   </data>
   <data name="UseMoshByDefault.Header" xml:space="preserve">
     <value>По умолчанию использовать Mosh для SSH соединений</value>
@@ -885,7 +912,8 @@ Fuzzy</comment>
     <value>Неверная команда.</value>
   </data>
   <data name="LocationCantBeEmpty" xml:space="preserve">
-    <value>Location cannot be empty.</value>
+    <value>Не может быть пустым</value>
+    <comment>Fuzzy</comment>
   </data>
   <data name="MuteTerminalBeeps.Header" xml:space="preserve">
     <value>Заглушить звуковый сигналы</value>
@@ -895,6 +923,7 @@ Fuzzy</comment>
   </data>
   <data name="CommandLine.Header" xml:space="preserve">
     <value>Команда</value>
+    <comment>Fuzzy</comment>
   </data>
   <data name="UnsupportedCommand" xml:space="preserve">
     <value>Неподдерживаемая команда:</value>
@@ -910,6 +939,7 @@ Fuzzy</comment>
   </data>
   <data name="Command.NewCustomCommandWindow" xml:space="preserve">
     <value>Новое окно быстрого запуска</value>
+    <comment>Fuzzy</comment>
   </data>
   <data name="NewQuickTab.Text" xml:space="preserve">
     <value>Новая быстрая вкладка</value>
@@ -921,7 +951,8 @@ Fuzzy</comment>
     <value>Неверная ссылка.</value>
   </data>
   <data name="DropTabHere" xml:space="preserve">
-    <value>Drop tab here</value>
+    <value>Вкладку сюда</value>
+    <comment>Fuzzy</comment>
   </data>
   <data name="CloseLeft.Text" xml:space="preserve">
     <value>Закрыть вкладки слева</value>
@@ -940,15 +971,19 @@ Fuzzy</comment>
   </data>
   <data name="DuplicateEnvironmentVariable" xml:space="preserve">
     <value>Невозможно определить две переменные среды с тем же именем.</value>
+    <comment>Fuzzy</comment>
   </data>
   <data name="EmptyEnvironmentVariableName" xml:space="preserve">
     <value>Невозможно определить переменную среды без имени.</value>
+    <comment>Fuzzy</comment>
   </data>
   <data name="EnvironmentVariables.Text" xml:space="preserve">
     <value>Переменные среды</value>
+    <comment>Fuzzy</comment>
   </data>
   <data name="CloseSearchPanel.ToolTipService.ToolTip" xml:space="preserve">
     <value>Закрыть панель поиска</value>
+    <comment>Fuzzy</comment>
   </data>
   <data name="FindNext.ToolTipService.ToolTip" xml:space="preserve">
     <value>Найти следующее</value>
@@ -958,17 +993,139 @@ Fuzzy</comment>
   </data>
   <data name="SearchTextBox.PlaceholderText" xml:space="preserve">
     <value>Введите слово для поиска</value>
+    <comment>Fuzzy</comment>
   </data>
   <data name="Search.Text" xml:space="preserve">
     <value>Поиск</value>
+    <comment>Fuzzy</comment>
   </data>
   <data name="PrintableOutputOnly.Content" xml:space="preserve">
-    <value>Printable output only</value>
+    <value>Только печатный вывод</value>
+    <comment>Fuzzy</comment>
   </data>
   <data name="EnableLogging.Header" xml:space="preserve">
     <value>Вывод журнала для отладки</value>
+    <comment>Fuzzy</comment>
   </data>
   <data name="WordSeparator.Header" xml:space="preserve">
     <value>Символы разделителя слов</value>
+  </data>
+  <data name="Recent.Text" xml:space="preserve">
+    <value>Недавние</value>
+  </data>
+  <data name="NewTab_Description" xml:space="preserve">
+    <value>Открыть профиль &apos;по умолчанию&apos; в новой вкладке.</value>
+  </data>
+  <data name="NewSshTab_Description" xml:space="preserve">
+    <value>Открыть новую SSH или Mosh сессию в новой вкладке.</value>
+  </data>
+  <data name="NewQuickTab_Description" xml:space="preserve">
+    <value>Открыть окно Быстрого запуска и запустить сессию в новой вкладке.</value>
+  </data>
+  <data name="Settings_Description" xml:space="preserve">
+    <value>Открыть окно настроек.</value>
+  </data>
+  <data name="About_Description" xml:space="preserve">
+    <value>Базовая информация о приложении.</value>
+  </data>
+  <data name="Recent_Description" xml:space="preserve">
+    <value>Недавно открытые сессии.</value>
+  </data>
+  <data name="MenuItem_DefaultProfile_Description" xml:space="preserve">
+    <value>Запуск новой сессии с профилем &apos;по умолчанию&apos;.</value>
+  </data>
+  <data name="MenuItem_Remote_Text" xml:space="preserve">
+    <value>Удалённое подключение...</value>
+  </data>
+  <data name="MenuItem_Remote_Description" xml:space="preserve">
+    <value>Открыть окно для запуска новой SSH или Mosh сессии.</value>
+  </data>
+  <data name="MenuItem_QuickLaunch_Text" xml:space="preserve">
+    <value>Быстрый запуск...</value>
+  </data>
+  <data name="MenuItem_QuickLaunch_Description" xml:space="preserve">
+    <value>Открыть окно Быстрого запуска для запуска новой сессии.</value>
+  </data>
+  <data name="MenuItem_NewWindow_Text" xml:space="preserve">
+    <value>Новое окно</value>
+  </data>
+  <data name="MenuItem_NewTab_Text" xml:space="preserve">
+    <value>Новая вкладка</value>
+  </data>
+  <data name="MenuItem_NewTab_Description" xml:space="preserve">
+    <value>Запуск сессии в новой вкладке.</value>
+  </data>
+  <data name="MenuItem_NewWindow_Description" xml:space="preserve">
+    <value>Запуск сессии в новом окне.</value>
+  </data>
+  <data name="AppMenuType.Text" xml:space="preserve">
+    <value>Тип меню приложения</value>
+  </data>
+  <data name="AppMenuType_Flat.Content" xml:space="preserve">
+    <value>Плоская, с учетом настройки &quot;Открыть новый терминал как&quot;</value>
+  </data>
+  <data name="AppMenuType_Cascading.Content" xml:space="preserve">
+    <value>Открывать новые окна и вкладки каскадом.</value>
+  </data>
+  <data name="Quit.Text" xml:space="preserve">
+    <value>Выйти</value>
+  </data>
+  <data name="Quit.Description" xml:space="preserve">
+    <value>Выйти из Fluent Terminal</value>
+  </data>
+  <data name="EnabledByPolicy" xml:space="preserve">
+    <value>Включено политикой.</value>
+    <comment>There should be something explaining by what &quot;policy&quot; this was enabled? (e.g. &quot;local policy&quot; or smth.)</comment>
+  </data>
+  <data name="BackgroundImage.Content" xml:space="preserve">
+    <value>Фоновое изображение</value>
+  </data>
+  <data name="AcrylicBackground.Header" xml:space="preserve">
+    <value>Использовать акриловый фон</value>
+  </data>
+  <data name="ConfirmDeleteBackgroundImage" xml:space="preserve">
+    <value>Вы действительно хотите удалить это фоновое изображение?</value>
+  </data>
+  <data name="Colors.Text" xml:space="preserve">
+    <value>Цвета</value>
+  </data>
+  <data name="BrightColors.Text" xml:space="preserve">
+    <value>Яркие цвета</value>
+  </data>
+  <data name="CopyLink" xml:space="preserve">
+    <value>Скопировать ссылку</value>
+  </data>
+  <data name="SearchWithRegex.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Регулярные выражения</value>
+  </data>
+  <data name="SearchWholeWord.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Целый мир</value>
+  </data>
+  <data name="SearchCaseSensitive.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Деликатный случай</value>
+  </data>
+  <data name="MouseCopySelectionOrPaste.Content" xml:space="preserve">
+    <value>Скопировать выделение или вставить</value>
+  </data>
+  <data name="UseBuffer" xml:space="preserve">
+    <value>Использовать буфер</value>
+  </data>
+  <data name="RestartSession.Content" xml:space="preserve">
+    <value>Перезапустить</value>
+  </data>
+  <data name="SessionDisconnected.Text" xml:space="preserve">
+    <value>Соединение разорвано.</value>
+  </data>
+  <data name="Command.IncreaseFontSize" xml:space="preserve">
+    <value>Increase font size</value>
+  </data>
+  <data name="Command.DecreaseFontSize" xml:space="preserve">
+    <value>Decrease font size</value>
+  </data>
+  <data name="Command.ResetFontSize" xml:space="preserve">
+    <value>Reset font size</value>
+  </data>
+  <data name="Command.ReconnectTab" xml:space="preserve">
+    <value>Reconnect tab</value>
   </data>
 </root>

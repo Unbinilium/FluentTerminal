@@ -1,8 +1,9 @@
 ﻿using System.Threading.Tasks;
+using System.Windows.Input;
 using FluentTerminal.App.Services;
 using FluentTerminal.App.Services.Utilities;
-using FluentTerminal.App.ViewModels.Infrastructure;
 using FluentTerminal.Models;
+using Microsoft.Toolkit.Mvvm.Input;
 
 namespace FluentTerminal.App.ViewModels.Profiles
 {
@@ -26,7 +27,7 @@ namespace FluentTerminal.App.ViewModels.Profiles
         public string Location
         {
             get => _location;
-            set => Set(ref _location, value);
+            set => SetProperty(ref _location, value);
         }
 
         private string _workingDirectory;
@@ -34,7 +35,7 @@ namespace FluentTerminal.App.ViewModels.Profiles
         public string WorkingDirectory
         {
             get => _workingDirectory;
-            set => Set(ref _workingDirectory, value);
+            set => SetProperty(ref _workingDirectory, value);
         }
 
         private string _arguments;
@@ -42,16 +43,16 @@ namespace FluentTerminal.App.ViewModels.Profiles
         public string Arguments
         {
             get => _arguments;
-            set => Set(ref _arguments, value);
+            set => SetProperty(ref _arguments, value);
         }
 
         #endregion Properties
 
         #region Commands
 
-        public IAsyncCommand BrowseForCustomShellCommand { get; }
+        public ICommand BrowseForCustomShellCommand { get; }
 
-        public IAsyncCommand BrowseForWorkingDirectoryCommand { get; }
+        public ICommand BrowseForWorkingDirectoryCommand { get; }
 
         #endregion Commands
 
@@ -63,8 +64,8 @@ namespace FluentTerminal.App.ViewModels.Profiles
         {
             _fileSystemService = fileSystemService;
 
-            BrowseForCustomShellCommand = new AsyncCommand(BrowseForCustomShell);
-            BrowseForWorkingDirectoryCommand = new AsyncCommand(BrowseForWorkingDirectory);
+            BrowseForCustomShellCommand = new AsyncRelayCommand(BrowseForCustomShell);
+            BrowseForWorkingDirectoryCommand = new AsyncRelayCommand(BrowseForWorkingDirectory);
 
             Initialize(Model);
         }
@@ -90,7 +91,7 @@ namespace FluentTerminal.App.ViewModels.Profiles
 
         protected override async Task CopyToProfileAsync(ShellProfile profile)
         {
-            await base.CopyToProfileAsync(profile);
+            await base.CopyToProfileAsync(profile).ConfigureAwait(false);
 
             profile.Location = _location;
             profile.Arguments = _arguments;
@@ -99,7 +100,7 @@ namespace FluentTerminal.App.ViewModels.Profiles
 
         public override async Task<string> ValidateAsync()
         {
-            var error = await base.ValidateAsync();
+            var error = await base.ValidateAsync().ConfigureAwait(false);
 
             if (!string.IsNullOrEmpty(error))
             {
@@ -123,18 +124,22 @@ namespace FluentTerminal.App.ViewModels.Profiles
                    !Model.Arguments.NullableEqualTo(_arguments);
         }
 
+        // Requires UI thread
         private async Task BrowseForCustomShell()
         {
-            var file = await _fileSystemService.OpenFile(new[] { ".exe" }).ConfigureAwait(true);
+            // ConfigureAwait(true) because we're setting some view-model properties afterwards.
+            var file = await _fileSystemService.OpenFileAsync(new[] { ".exe" }).ConfigureAwait(true);
             if (file != null)
             {
                 Location = file.Path;
             }
         }
 
+        // Requires UI thread
         private async Task BrowseForWorkingDirectory()
         {
-            var directory = await _fileSystemService.BrowseForDirectory().ConfigureAwait(true);
+            // ConfigureAwait(true) because we're setting some view-model properties afterwards.
+            var directory = await _fileSystemService.BrowseForDirectoryAsync().ConfigureAwait(true);
             if (directory != null)
             {
                 WorkingDirectory = directory;

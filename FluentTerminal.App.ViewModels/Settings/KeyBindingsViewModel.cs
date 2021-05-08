@@ -1,6 +1,6 @@
 ﻿using FluentTerminal.App.Services;
 using FluentTerminal.Models;
-using GalaSoft.MvvmLight;
+using Microsoft.Toolkit.Mvvm.ComponentModel;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace FluentTerminal.App.ViewModels.Settings
 {
-    public class KeyBindingsViewModel : ViewModelBase
+    public class KeyBindingsViewModel : ObservableObject
     {
         private readonly IDialogService _dialogService;
         private bool _editable;
@@ -37,26 +37,30 @@ namespace FluentTerminal.App.ViewModels.Settings
         public bool Editable
         {
             get => _editable;
-            set => Set(ref _editable, value);
+            set => SetProperty(ref _editable, value);
         }
 
         public ObservableCollection<KeyBindingViewModel> KeyBindings { get; } = new ObservableCollection<KeyBindingViewModel>();
 
-        public async Task ShowAddKeyBindingDialog()
+        // Requires UI thread
+        public async Task ShowAddKeyBindingDialogAsync()
         {
             var newKeyBinding = new KeyBindingViewModel(new KeyBinding { Command = Command }, _dialogService, this);
 
-            if (await newKeyBinding.Edit().ConfigureAwait(true))
+            // ConfigureAwait(true) because we need to execute Add method in the calling (UI) thread.
+            if (await newKeyBinding.EditAsync().ConfigureAwait(true))
             {
                 Add(newKeyBinding.Model);
             }
         }
 
+        // Requires UI thread
         public void Clear()
         {
             KeyBindings.Clear();
         }
 
+        // Requires UI thread
         public void Add(KeyBinding keyBinding)
         {
             var viewModel = new KeyBindingViewModel(keyBinding, _dialogService, this);

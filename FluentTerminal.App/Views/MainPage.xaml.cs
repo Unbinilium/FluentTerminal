@@ -1,6 +1,5 @@
 ﻿using FluentTerminal.App.Utilities;
 using FluentTerminal.App.ViewModels;
-using FluentTerminal.Models;
 using System;
 using System.ComponentModel;
 using System.Linq;
@@ -9,24 +8,24 @@ using Windows.UI.Core;
 using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Media;
-using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
 using FluentTerminal.App.Services;
 using FluentTerminal.App.Services.EventArgs;
 using Windows.ApplicationModel.DataTransfer;
+using Windows.System;
 using Windows.UI.Xaml.Input;
 using FluentTerminal.App.Services.Utilities;
 
 namespace FluentTerminal.App.Views
 {
+    // ReSharper disable once RedundantExtendsListEntry
     public sealed partial class MainPage : Page, INotifyPropertyChanged
     {
-        private CoreApplicationViewTitleBar coreTitleBar = CoreApplication.GetCurrentView().TitleBar;
+        private CoreApplicationViewTitleBar _coreTitleBar = CoreApplication.GetCurrentView().TitleBar;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public double CoreTitleBarHeight => coreTitleBar.Height;
+        public double CoreTitleBarHeight => _coreTitleBar.Height;
 
         public TimeSpan NoDuration => TimeSpan.Zero;
 
@@ -36,11 +35,11 @@ namespace FluentTerminal.App.Views
             {
                 if (FlowDirection == FlowDirection.LeftToRight)
                 {
-                    return new Thickness { Left = coreTitleBar.SystemOverlayLeftInset, Right = coreTitleBar.SystemOverlayRightInset };
+                    return new Thickness { Left = _coreTitleBar.SystemOverlayLeftInset, Right = _coreTitleBar.SystemOverlayRightInset };
                 }
                 else
                 {
-                    return new Thickness { Left = coreTitleBar.SystemOverlayRightInset, Right = coreTitleBar.SystemOverlayLeftInset };
+                    return new Thickness { Left = _coreTitleBar.SystemOverlayRightInset, Right = _coreTitleBar.SystemOverlayLeftInset };
                 }
             }
         }
@@ -69,7 +68,7 @@ namespace FluentTerminal.App.Views
 
         private async void MainPage_DraggingHappensChanged(object sender, bool e)
         {
-            await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
+            await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
             {
                 if (sender != TopTabBar && sender != BottomTabBar)
                 {
@@ -110,14 +109,14 @@ namespace FluentTerminal.App.Views
             DraggingHappensChanged -= MainPage_DraggingHappensChanged;
             Window.Current.Activated -= OnWindowActivated;
 
-            coreTitleBar.LayoutMetricsChanged -= OnLayoutMetricsChanged;
+            _coreTitleBar.LayoutMetricsChanged -= OnLayoutMetricsChanged;
 
             ViewModel.Closed -= ViewModel_Closed;
             ViewModel = null;
             Root.DataContext = null;
             Window.Current.SetTitleBar(null);
 
-            coreTitleBar = null;
+            _coreTitleBar = null;
             Bindings.StopTracking();
             TerminalContainer.Content = null;
         }
@@ -133,7 +132,7 @@ namespace FluentTerminal.App.Views
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
-            coreTitleBar.LayoutMetricsChanged += OnLayoutMetricsChanged;
+            _coreTitleBar.LayoutMetricsChanged += OnLayoutMetricsChanged;
             UpdateLayoutMetrics();
         }
 
@@ -153,9 +152,9 @@ namespace FluentTerminal.App.Views
 
         private async void TabView_Drop(object sender, NewTabRequestedEventArgs e)
         {
-            if (e.DragEventArgs.DataView.Properties.TryGetValue(Constants.TerminalViewModelStateId, out object stateObj) && stateObj is string terminalViewModelState)
+            if (e.DragEventArgs.DataView.Properties.TryGetValue(Constants.TerminalViewModelStateId, out var stateObj) && stateObj is string terminalViewModelState)
             {
-                await ViewModel.AddTerminalAsync(terminalViewModelState, e.Position);
+                await ViewModel.AddTabAsync(terminalViewModelState, e.Position);
             }
         }
 
@@ -178,7 +177,7 @@ namespace FluentTerminal.App.Views
             }
             else
             {
-                ViewModel.ApplicationView.TryClose();
+                ViewModel.ApplicationView.TryCloseAsync();
             }
         }
 
@@ -200,14 +199,17 @@ namespace FluentTerminal.App.Views
             set { SetValue(DraggingHappensProperty, value); }
         }
 
-        static private event EventHandler<bool> DraggingHappensChanged;
+        private static event EventHandler<bool> DraggingHappensChanged;
 
         private void TabDropArea_DragEnter(object sender, DragEventArgs e)
         {
             Logger.Instance.Debug("TabDropArea_DragEnter.");
             e.AcceptedOperation = DataPackageOperation.Move;
-            e.DragUIOverride.IsGlyphVisible = false;
-            e.DragUIOverride.Caption = I18N.Translate("DropTabHere");
+            if (e.DragUIOverride is DragUIOverride dragUiOverride)
+            {
+                dragUiOverride.IsGlyphVisible = false;
+                dragUiOverride.Caption = I18N.Translate("DropTabHere");
+            }
         }
 
         private async void TabDropArea_Drop(object sender, DragEventArgs e)
@@ -215,13 +217,30 @@ namespace FluentTerminal.App.Views
             if (e.DataView.Properties.TryGetValue(Constants.TerminalViewModelStateId, out object stateObj) && stateObj is string terminalViewModelState)
             {
                 TabBar.ItemWasDropped = true;
-                await ViewModel.AddTerminalAsync(terminalViewModelState, ViewModel.Terminals.Count);
+                await ViewModel.AddTabAsync(terminalViewModelState, ViewModel.Terminals.Count);
             }
         }
 
         private void TabBar_TabDraggingChanged(object sender, bool e)
         {
             DraggingHappensChanged?.Invoke(sender, e);
+        }
+
+        private void MainPage_OnKeyDown(object sender, KeyRoutedEventArgs e)
+        {
+            var control = e.Key == VirtualKey.Control || Window.Current.CoreWindow.GetKeyState(VirtualKey.Control)
+                               .HasFlag(CoreVirtualKeyStates.Down);
+            var alt = e.Key == VirtualKey.Menu || Window.Current.CoreWindow.GetKeyState(VirtualKey.Menu)
+                          .HasFlag(CoreVirtualKeyStates.Down);
+            var shift = e.Key == VirtualKey.Menu || Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift)
+                            .HasFlag(CoreVirtualKeyStates.Down);
+            var meta = e.Key == VirtualKey.LeftWindows || e.Key == VirtualKey.RightWindows
+                                                       || Window.Current.CoreWindow.GetKeyState(VirtualKey.LeftWindows)
+                                                           .HasFlag(CoreVirtualKeyStates.Down)
+                                                       || Window.Current.CoreWindow.GetKeyState(VirtualKey.RightWindows)
+                                                           .HasFlag(CoreVirtualKeyStates.Down);
+
+            ViewModel?.OnWindowKeyDown((int) e.Key, control, alt, shift, meta);
         }
     }
 }

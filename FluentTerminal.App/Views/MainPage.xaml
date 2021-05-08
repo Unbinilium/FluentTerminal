@@ -6,14 +6,19 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:views="using:FluentTerminal.App.Views"
+    KeyDown="MainPage_OnKeyDown"
     RequestedTheme="{x:Bind ViewModel.SelectedTerminal.TerminalTheme.Colors.Background, Mode=OneWay, Converter={StaticResource BackgroundToApplicationThemeConverter}}"
     mc:Ignorable="d">
+    <Page.Background>
+        <SolidColorBrush Color="{ThemeResource SystemAccentColor}" />
+    </Page.Background>
     <Page.Resources>
         <converters:TerminalViewModelToViewConverter x:Key="TerminalViewModelToViewConverter" />
     </Page.Resources>
     <Grid x:Name="Root">
         <Grid.Background>
             <AcrylicBrush
+                AlwaysUseFallback="{x:Bind ViewModel.UseAcrylicBackground, Mode=OneWay, Converter={StaticResource NegateConverter}}"
                 BackgroundSource="HostBackdrop"
                 FallbackColor="{x:Bind ViewModel.SelectedTerminal.TerminalTheme.Colors.Background, Mode=OneWay}"
                 TintColor="{x:Bind ViewModel.SelectedTerminal.TerminalTheme.Colors.Background, Mode=OneWay}"
@@ -34,50 +39,12 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-            <Button
-                x:Name="Hamburger"
-                Height="32"
-                Style="{StaticResource TitleBarButtonStyle}">
+            <Button Flyout="{x:Bind ViewModel.AppMenuViewModel, Mode=OneWay, Converter={StaticResource MenuViewModelToFlyoutMenuConverter}}" Style="{StaticResource TitleBarButtonStyle}">
                 <Button.Content>
                     <Viewbox Width="16" Height="16">
-                        <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE700;" />
+                        <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE700;" />
                     </Viewbox>
                 </Button.Content>
-                <Button.Flyout>
-                    <MenuFlyout Placement="BottomEdgeAlignedLeft">
-                        <MenuFlyoutItem
-                            x:Uid="NewTab"
-                            Command="{x:Bind ViewModel.AddLocalShellCommand}"
-                            Text="New local shell">
-                            <MenuFlyoutItem.Icon>
-                                <SymbolIcon Symbol="Add" />
-                            </MenuFlyoutItem.Icon>
-                        </MenuFlyoutItem>
-                        <MenuFlyoutItem x:Uid="NewSshTab" Command="{x:Bind ViewModel.AddSshShellCommand}">
-                            <MenuFlyoutItem.Icon>
-                                <SymbolIcon Symbol="Add" />
-                            </MenuFlyoutItem.Icon>
-                        </MenuFlyoutItem>
-                        <MenuFlyoutItem x:Uid="NewQuickTab" Command="{x:Bind ViewModel.AddQuickShellCommand}">
-                            <MenuFlyoutItem.Icon>
-                                <SymbolIcon Symbol="Add" />
-                            </MenuFlyoutItem.Icon>
-                        </MenuFlyoutItem>
-                        <MenuFlyoutItem x:Uid="Settings" Command="{x:Bind ViewModel.ShowSettingsCommand}">
-                            <MenuFlyoutItem.Icon>
-                                <SymbolIcon Symbol="Setting" />
-                            </MenuFlyoutItem.Icon>
-                        </MenuFlyoutItem>
-                        <MenuFlyoutItem Command="{x:Bind ViewModel.ShowAboutCommand}" Text="{x:Bind Converter={StaticResource I18NConverter}, ConverterParameter=AboutDialog.Title}">
-                            <MenuFlyoutItem.Icon>
-                                <FontIcon
-                                    FontFamily="Segoe MDL2 Assets"
-                                    Glyph="&#xE946;"
-                                    ToolTipService.ToolTip="About" />
-                            </MenuFlyoutItem.Icon>
-                        </MenuFlyoutItem>
-                    </MenuFlyout>
-                </Button.Flyout>
             </Button>
             <TextBlock
                 Grid.Column="1"
@@ -102,7 +69,7 @@
                 x:Name="TopTabBar"
                 Grid.Column="1"
                 HorizontalAlignment="Left"
-                AddCommand="{x:Bind ViewModel.AddLocalShellCommand}"
+                AddCommand="{x:Bind ViewModel.AddDefaultTabCommand}"
                 ItemsSource="{x:Bind ViewModel.Terminals, Mode=OneWay}"
                 SelectedItem="{x:Bind ViewModel.SelectedTerminal, Mode=TwoWay}"
                 TabDraggedOutside="TabBar_TabDraggedOutside"
@@ -135,7 +102,7 @@
             x:Name="BottomTabBar"
             Grid.Row="2"
             HorizontalAlignment="Left"
-            AddCommand="{x:Bind ViewModel.AddLocalShellCommand}"
+            AddCommand="{x:Bind ViewModel.AddDefaultTabCommand}"
             ItemsSource="{x:Bind ViewModel.Terminals, Mode=OneWay}"
             SelectedItem="{x:Bind ViewModel.SelectedTerminal, Mode=TwoWay}"
             TabDraggedOutside="TabBar_TabDraggedOutside"

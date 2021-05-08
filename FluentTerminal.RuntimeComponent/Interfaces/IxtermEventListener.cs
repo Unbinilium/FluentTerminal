@@ -1,5 +1,6 @@
 ﻿using FluentTerminal.RuntimeComponent.Enums;
 using System;
+using System.Runtime.InteropServices.WindowsRuntime;
 
 namespace FluentTerminal.RuntimeComponent.Interfaces
 {
@@ -11,16 +12,18 @@ namespace FluentTerminal.RuntimeComponent.Interfaces
 
         void OnKeyboardCommand(string command);
 
-        void OnMouseClick(MouseButton mouseButton, int x, int y, bool hasSelection);
+        void OnMouseClick(MouseButton mouseButton, int x, int y, bool hasSelection, string hoveredUri);
 
         void OnSelectionChanged(string selection);
 
         void OnError(string error);
 
-        void OnInput(string text);
+        void OnInput([ReadOnlyArray]byte[] data);
 
         void OnInitialized();
 
         event EventHandler<object> OnOutput;
+        event EventHandler<string> OnPaste;
+        event EventHandler<string> OnSessionRestart;
     }
 }

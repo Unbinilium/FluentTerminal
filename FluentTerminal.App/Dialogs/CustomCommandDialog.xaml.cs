@@ -12,10 +12,12 @@ using FluentTerminal.App.Utilities;
 using FluentTerminal.App.ViewModels.Profiles;
 using FluentTerminal.Models;
 using System.Linq;
+using Windows.Foundation;
 using Windows.System;
 using Windows.UI.Xaml.Input;
 using FluentTerminal.App.ViewModels;
-using FluentTerminal.App.ViewModels.Infrastructure;
+using System.Windows.Input;
+using Microsoft.Toolkit.Mvvm.Input;
 
 // The Content Dialog item template is documented at https://go.microsoft.com/fwlink/?LinkId=234238
 
@@ -27,25 +29,31 @@ namespace FluentTerminal.App.Dialogs
         private readonly ISettingsService _settingsService;
         private readonly IApplicationView _applicationView;
         private readonly ITrayProcessCommunicationService _trayProcessCommunicationService;
-        private readonly IApplicationDataContainer _historyContainer;
+        private readonly ICommandHistoryService _historyService;
 
-        private ExecutedCommand _lastChosenCommand;
+        private IAsyncOperation<ContentDialogResult> _showDialogOperation;
+        private ContentDialogResult _dialogResult = ContentDialogResult.None;
+
+        private CommandItemViewModel _lastChosenCommand;
+
+        // TODO: The following field is for hacking strange behavior that deletes command text after Tab selection. Consider finding a better fix.
+        private CommandItemViewModel _tabSelectedCommand;
 
         public CommandProfileProviderViewModel ViewModel { get; private set; }
 
-        public IAsyncCommand SaveLinkCommand { get; }
+        public ICommand SaveLinkCommand { get; }
 
         public CustomCommandDialog(ISettingsService settingsService, IApplicationView applicationView,
-            ITrayProcessCommunicationService trayProcessCommunicationService, ApplicationDataContainers containers)
+            ITrayProcessCommunicationService trayProcessCommunicationService, ICommandHistoryService historyService)
         {
             _settingsService = settingsService;
             _applicationView = applicationView;
             _trayProcessCommunicationService = trayProcessCommunicationService;
-            _historyContainer = containers.HistoryContainer;
+            _historyService = historyService;
 
             InitializeComponent();
 
-            SaveLinkCommand = new AsyncCommand(SaveLink);
+            SaveLinkCommand = new AsyncRelayCommand(SaveLink);
 
             PrimaryButtonText = I18N.Translate("OK");
             SecondaryButtonText = I18N.Translate("Cancel");
@@ -65,7 +73,11 @@ namespace FluentTerminal.App.Dialogs
 
             var error = await ViewModel.AcceptChangesAsync();
 
-            if (!string.IsNullOrEmpty(error))
+            if (string.IsNullOrEmpty(error))
+            {
+                _dialogResult = ContentDialogResult.Primary;
+            }
+            else
             {
                 args.Cancel = true;
 
@@ -75,6 +87,11 @@ namespace FluentTerminal.App.Dialogs
             }
 
             deferral.Complete();
+        }
+
+        private void OnSecondaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
+        {
+            _dialogResult = ContentDialogResult.Secondary;
         }
 
         private async Task SaveLink()
@@ -117,11 +134,19 @@ namespace FluentTerminal.App.Dialogs
             {
                 ViewModel.SetFilter(sender.Text.Trim());
             }
+            // TODO: Else branch added for Tab-selection hack mentioned above.
+            else if (_tabSelectedCommand != null)
+            {
+                ViewModel.Command = _tabSelectedCommand.ExecutedCommand.Value;
+                CommandSelected(_tabSelectedCommand);
+
+                _tabSelectedCommand = null;
+            }
         }
 
         private void CommandTextBox_OnSuggestionChosen(AutoSuggestBox sender, AutoSuggestBoxSuggestionChosenEventArgs args)
         {
-            _lastChosenCommand = (args.SelectedItem as CommandItemViewModel)?.ExecutedCommand;
+            _lastChosenCommand = args.SelectedItem as CommandItemViewModel;
         }
 
         private void CommandTextBox_OnQuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
@@ -130,34 +155,53 @@ namespace FluentTerminal.App.Dialogs
 
             if (args.ChosenSuggestion is CommandItemViewModel commandItem)
             {
-                var executedCommand = ViewModel.Commands
-                    .FirstOrDefault(c =>
-                        c.ExecutedCommand.Value.Equals(commandItem.ExecutedCommand.Value.ToString(),
-                            StringComparison.OrdinalIgnoreCase))?.ExecutedCommand;
+                CommandSelected(commandItem);
+            }
+        }
 
-                if (executedCommand != null)
-                {
-                    ViewModel.SetProfile(executedCommand.ShellProfile.Clone());
-                }
+        private void CommandSelected(CommandItemViewModel commandItem)
+        {
+            var executedCommand = ViewModel.Commands.FirstOrDefault(c =>
+                c.ExecutedCommand.Value.Equals(commandItem.ExecutedCommand.Value,
+                    StringComparison.OrdinalIgnoreCase))?.ExecutedCommand;
+
+            if (executedCommand != null)
+            {
+                ViewModel.SetProfile(executedCommand.ShellProfile.Clone());
             }
         }
 
         private void CommandTextBox_OnPreviewKeyUp(object sender, KeyRoutedEventArgs e)
         {
-            var command = _lastChosenCommand;
+            switch (e.Key)
+            {
+                case VirtualKey.Delete:
 
-            if (e.Key == VirtualKey.Delete && !ViewModel.IsProfileCommand(command))
-            {
-                ViewModel.RemoveCommand(command);
-                e.Handled = true;
-            }
-            else
-            {
-                e.Handled = false;
+                    if (_lastChosenCommand?.ExecutedCommand is { } command)
+                    {
+                        if (!ViewModel.IsProfileCommand(command))
+                        {
+                            ViewModel.RemoveCommand(command);
+                        }
+
+                        e.Handled = true;
+                    }
+                    else
+                    {
+                        e.Handled = false;
+                    }
+
+                    return;
+
+                default:
+
+                    e.Handled = false;
+
+                    return;
             }
         }
 
-        private void CommandTextBox_OnKeyUp(object sender, KeyRoutedEventArgs e)
+        private async void CommandTextBox_OnKeyUp(object sender, KeyRoutedEventArgs e)
         {
             switch (e.Key)
             {
@@ -169,7 +213,7 @@ namespace FluentTerminal.App.Dialogs
                         CommandTextBox.IsSuggestionListOpen = true;
                     }
 
-                    break;
+                    return;
 
                 case VirtualKey.Enter:
 
@@ -179,48 +223,60 @@ namespace FluentTerminal.App.Dialogs
                     }
                     else
                     {
-                        // TODO: Try to find a better way to handle [Enter] on auto-complete field.
-                        // Weird way to move the focus to the primary button...
+                        var error = await ViewModel.AcceptChangesAsync();
 
-                        if (!(FocusManager.FindLastFocusableElement(this) is Control secondaryButton) ||
-                            !secondaryButton.Name.Equals("SecondaryButton"))
+                        if (string.IsNullOrEmpty(error))
                         {
-                            return;
+                            _dialogResult = ContentDialogResult.Primary;
+
+                            _showDialogOperation.Cancel();
                         }
-
-                        secondaryButton.Focus(FocusState.Programmatic);
-
-                        var options = new FindNextElementOptions
+                        else
                         {
-                            SearchRoot = this,
-                            XYFocusNavigationStrategyOverride = XYFocusNavigationStrategyOverride.Projection
-                        };
-
-                        if (FocusManager.FindNextElement(FocusNavigationDirection.Left, options) is Control primaryButton)
-                        {
-                            primaryButton.Focus(FocusState.Programmatic);
+                            await new MessageDialog(error, I18N.Translate("InvalidInput")).ShowAsync();
+                            SetupFocus(); // needed to apply focus back to the textbox instead of the terminal in the background.
                         }
                     }
 
-                    break;
+                    return;
+                case VirtualKey.Escape:
+                    Hide();
+                    return;
             }
         }
 
-        public async Task<ShellProfile> GetCustomCommandAsync(ShellProfile input = null)
+        private void CommandTextBox_OnKeyDown(object sender, KeyRoutedEventArgs e)
+        {
+            _tabSelectedCommand = null;
+
+            if (e.Key == VirtualKey.Tab)
+            {
+                _tabSelectedCommand = _lastChosenCommand;
+
+                if (_lastChosenCommand != null)
+                {
+                    ViewModel.Command = _lastChosenCommand.ExecutedCommand.Value;
+                    CommandSelected(_lastChosenCommand);
+                }
+            }
+
+            e.Handled = false;
+        }
+
+        public Task<ShellProfile> GetCustomCommandAsync(ShellProfile input = null)
         {
             ViewModel = new CommandProfileProviderViewModel(_settingsService, _applicationView,
-                _trayProcessCommunicationService, _historyContainer, input);
+                _trayProcessCommunicationService, _historyService, input);
 
             SetupFocus();
 
-            if (await ShowAsync() != ContentDialogResult.Primary)
-            {
-                return null;
-            }
+            _showDialogOperation = ShowAsync();
 
-            ViewModel.Model.Tag = new DelayedHistorySaver(ViewModel);
-
-            return ViewModel.Model;
+            return _showDialogOperation.AsTask().ContinueWith(t =>
+                (t.Status == TaskStatus.Canceled || t.Status == TaskStatus.RanToCompletion) &&
+                _dialogResult == ContentDialogResult.Primary
+                    ? ViewModel.Model
+                    : null);
         }
     }
 }

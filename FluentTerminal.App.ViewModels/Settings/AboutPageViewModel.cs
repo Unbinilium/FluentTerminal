@@ -1,12 +1,12 @@
 ﻿using FluentTerminal.App.Services;
-using FluentTerminal.App.ViewModels.Infrastructure;
-using GalaSoft.MvvmLight;
-using System;
+using Microsoft.Toolkit.Mvvm.ComponentModel;
+using Microsoft.Toolkit.Mvvm.Input;
 using System.Threading.Tasks;
+using System.Windows.Input;
 
 namespace FluentTerminal.App.ViewModels.Settings
 {
-    public class AboutPageViewModel : ViewModelBase
+    public class AboutPageViewModel : ObservableObject
     {
         private const string BaseUrl = "https://github.com/felixse/FluentTerminal/releases/tag/";
         private readonly IUpdateService _updateService;
@@ -18,17 +18,17 @@ namespace FluentTerminal.App.ViewModels.Settings
             _updateService = updateService;
             _applicationView = applicationView;
 
-            CheckForUpdatesCommand = new AsyncCommand(() => CheckForUpdate(true));
+            CheckForUpdatesCommand = new AsyncRelayCommand(() => CheckForUpdateAsync(true));
         }
 
-        public IAsyncCommand CheckForUpdatesCommand { get; }
+        public ICommand CheckForUpdatesCommand { get; }
 
         public string CurrentVersion
         {
             get
             {
                 var version = _updateService.GetCurrentVersion();
-                return ConvertVersionToString(version);
+                return $"{version.Major}.{version.Minor}.{version.Build}.{version.Revision}";
             }
         }
 
@@ -39,12 +39,12 @@ namespace FluentTerminal.App.ViewModels.Settings
             get => _latestVersion;
             set
             {
-                if (Set(ref _latestVersion, value))
+                if (SetProperty(ref _latestVersion, value))
                 {
-                    RaisePropertyChanged(nameof(LatestVersionFound));
-                    RaisePropertyChanged(nameof(LatestVersionLoading));
-                    RaisePropertyChanged(nameof(LatestVersionNotFound));
-                    RaisePropertyChanged(nameof(LatestVersionReleaseNotesURL));
+                    OnPropertyChanged(nameof(LatestVersionFound));
+                    OnPropertyChanged(nameof(LatestVersionLoading));
+                    OnPropertyChanged(nameof(LatestVersionNotFound));
+                    OnPropertyChanged(nameof(LatestVersionReleaseNotesURL));
                 }
             }
         }
@@ -59,19 +59,16 @@ namespace FluentTerminal.App.ViewModels.Settings
 
         public Task OnNavigatedTo()
         {
-            return CheckForUpdate(false);
+            return CheckForUpdateAsync(false);
         }
 
-        public async Task CheckForUpdate(bool notifyNoUpdate)
+        private async Task CheckForUpdateAsync(bool notifyNoUpdate)
         {
-            var version = ConvertVersionToString(await _updateService.GetLatestVersionAsync());
-            await _applicationView.RunOnDispatcherThread(() => LatestVersion = version);
-            await _updateService.CheckForUpdate(notifyNoUpdate);
-        }
-
-        private string ConvertVersionToString(Version version)
-        {
-            return string.Format("{0}.{1}.{2}.{3}", version.Major, version.Minor, version.Build, version.Revision);
+            var version = await _updateService.GetLatestVersionAsync().ConfigureAwait(false);
+            await _applicationView.ExecuteOnUiThreadAsync(() =>
+                    LatestVersion = $"{version.Major}.{version.Minor}.{version.Build}.{version.Revision}")
+                .ConfigureAwait(false);
+            await _updateService.CheckForUpdateAsync(notifyNoUpdate).ConfigureAwait(false);
         }
     }
 }

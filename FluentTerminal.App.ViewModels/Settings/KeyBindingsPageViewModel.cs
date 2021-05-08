@@ -2,17 +2,18 @@
 using FluentTerminal.App.Services.Utilities;
 using FluentTerminal.Models;
 using FluentTerminal.Models.Enums;
-using GalaSoft.MvvmLight;
-using GalaSoft.MvvmLight.Command;
+using Microsoft.Toolkit.Mvvm.ComponentModel;
+using Microsoft.Toolkit.Mvvm.Input;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Input;
 
 namespace FluentTerminal.App.ViewModels.Settings
 {
-    public class KeyBindingsPageViewModel : ViewModelBase
+    public class KeyBindingsPageViewModel : ObservableObject
     {
         private readonly IDialogService _dialogService;
         private readonly ISettingsService _settingsService;
@@ -23,22 +24,22 @@ namespace FluentTerminal.App.ViewModels.Settings
             _settingsService = settingsService;
             _dialogService = dialogService;
             _trayProcessCommunicationService = trayProcessCommunicationService;
-            RestoreDefaultsCommand = new RelayCommand(async () => await RestoreDefaults().ConfigureAwait(false));
-            AddCommand = new RelayCommand<string>(async command => await Add(command).ConfigureAwait(false));
+            RestoreDefaultsCommand = new AsyncRelayCommand(RestoreDefaultsAsync);
+            AddCommand = new AsyncRelayCommand<string>(AddAsync);
 
             Initialize(_settingsService.GetCommandKeyBindings());
         }
 
-        public RelayCommand<string> AddCommand { get; }
+        public ICommand AddCommand { get; }
         public ObservableCollection<KeyBindingsViewModel> KeyBindings { get; } = new ObservableCollection<KeyBindingsViewModel>();
-        public RelayCommand RestoreDefaultsCommand { get; }
+        public ICommand RestoreDefaultsCommand { get; }
 
-        private async Task Add(string command)
+        private Task AddAsync(string command)
         {
-            var keyBinding = KeyBindings.FirstOrDefault(k => k.Command == command);
-            await keyBinding?.ShowAddKeyBindingDialog();
+            return KeyBindings.First(k => k.Command == command).ShowAddKeyBindingDialogAsync();
         }
 
+        // Requires UI thread
         private void ClearKeyBindings()
         {
             foreach (var keyBinding in KeyBindings)
@@ -49,6 +50,7 @@ namespace FluentTerminal.App.ViewModels.Settings
             KeyBindings.Clear();
         }
 
+        // Requires UI thread
         private void Initialize(IDictionary<string, ICollection<KeyBinding>> keyBindings)
         {
             ClearKeyBindings();
@@ -69,12 +71,15 @@ namespace FluentTerminal.App.ViewModels.Settings
         private void OnEdited(string command, ICollection<KeyBinding> keyBindings)
         {
             _settingsService.SaveKeyBindings(command, keyBindings);
-            _trayProcessCommunicationService.UpdateToggleWindowKeyBindings();
+            _trayProcessCommunicationService.UpdateToggleWindowKeyBindingsAsync();
         }
 
-        private async Task RestoreDefaults()
+        // Requires UI thread
+        private async Task RestoreDefaultsAsync()
         {
-            var result = await _dialogService.ShowMessageDialogAsnyc(I18N.Translate("PleaseConfirm"), I18N.Translate("ConfirmRestoreKeybindings"), DialogButton.OK, DialogButton.Cancel).ConfigureAwait(true);
+            // ConfigureAwait(true) because we need to execute Initialize in the calling (UI) thread.
+            var result = await _dialogService.ShowMessageDialogAsync(I18N.Translate("PleaseConfirm"),
+                I18N.Translate("ConfirmRestoreKeybindings"), DialogButton.OK, DialogButton.Cancel).ConfigureAwait(true);
 
             if (result == DialogButton.OK)
             {

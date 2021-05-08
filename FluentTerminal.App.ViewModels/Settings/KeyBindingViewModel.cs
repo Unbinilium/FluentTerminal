@@ -1,14 +1,15 @@
 ﻿using FluentTerminal.App.Services;
 using FluentTerminal.App.Services.Utilities;
-using FluentTerminal.App.ViewModels.Infrastructure;
 using FluentTerminal.Models;
-using GalaSoft.MvvmLight;
+using Microsoft.Toolkit.Mvvm.ComponentModel;
+using Microsoft.Toolkit.Mvvm.Input;
 using System;
 using System.Threading.Tasks;
+using System.Windows.Input;
 
 namespace FluentTerminal.App.ViewModels.Settings
 {
-    public class KeyBindingViewModel : ViewModelBase
+    public class KeyBindingViewModel : ObservableObject
     {
         private readonly IDialogService _dialogService;
 
@@ -17,10 +18,11 @@ namespace FluentTerminal.App.ViewModels.Settings
             Model = keyBinding;
             Parent = parent;
             _dialogService = dialogService;
-            EditCommand = new AsyncCommand(Edit);
-            DeleteCommand = new AsyncCommand(Delete);
+            EditCommand = new AsyncRelayCommand(EditAsync);
+            DeleteCommand = new AsyncRelayCommand(DeleteAsync);
         }
 
+        // Needs to be triggered from the UI thread
         public event EventHandler Deleted;
 
         public event EventHandler Edited;
@@ -35,7 +37,7 @@ namespace FluentTerminal.App.ViewModels.Settings
                 if (Model.Meta != value)
                 {
                     Model.Meta = value;
-                    RaisePropertyChanged();
+                    OnPropertyChanged();
                 }
             }
         }
@@ -48,7 +50,7 @@ namespace FluentTerminal.App.ViewModels.Settings
                 if (Model.Alt != value)
                 {
                     Model.Alt = value;
-                    RaisePropertyChanged();
+                    OnPropertyChanged();
                 }
             }
         }
@@ -61,13 +63,13 @@ namespace FluentTerminal.App.ViewModels.Settings
                 if (Model.Ctrl != value)
                 {
                     Model.Ctrl = value;
-                    RaisePropertyChanged();
+                    OnPropertyChanged();
                 }
             }
         }
 
-        public IAsyncCommand DeleteCommand { get; }
-        public IAsyncCommand EditCommand { get; }
+        public ICommand DeleteCommand { get; }
+        public ICommand EditCommand { get; }
 
         public int Key
         {
@@ -77,7 +79,7 @@ namespace FluentTerminal.App.ViewModels.Settings
                 if (Model.Key != value)
                 {
                     Model.Key = value;
-                    RaisePropertyChanged();
+                    OnPropertyChanged();
                 }
             }
         }
@@ -92,13 +94,15 @@ namespace FluentTerminal.App.ViewModels.Settings
                 if (Model.Shift != value)
                 {
                     Model.Shift = value;
-                    RaisePropertyChanged();
+                    OnPropertyChanged();
                 }
             }
         }
 
-        public async Task<bool> Edit()
+        // Requires UI thread
+        public async Task<bool> EditAsync()
         {
+            // ConfigureAwait(true) because we're setting some view-model properties afterwards.
             var keyBinding = await _dialogService.ShowCreateKeyBindingDialog().ConfigureAwait(true);
 
             if (keyBinding != null)
@@ -117,9 +121,12 @@ namespace FluentTerminal.App.ViewModels.Settings
             return false;
         }
 
-        private async Task Delete()
+        // Requires UI thread
+        private async Task DeleteAsync()
         {
-            var result = await _dialogService.ShowMessageDialogAsnyc(I18N.Translate("PleaseConfirm"), I18N.Translate("ConfirmDeleteKeybindings"), DialogButton.OK, DialogButton.Cancel).ConfigureAwait(true);
+            // ConfigureAwait(true) because we need to trigger Deleted event in the calling (UI) thread.
+            var result = await _dialogService.ShowMessageDialogAsync(I18N.Translate("PleaseConfirm"),
+                I18N.Translate("ConfirmDeleteKeybindings"), DialogButton.OK, DialogButton.Cancel).ConfigureAwait(true);
 
             if (result == DialogButton.OK)
             {
